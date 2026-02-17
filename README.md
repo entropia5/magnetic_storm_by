@@ -17,4 +17,5 @@
 2. Библиотеки: [CPR](https://github.com/libcpr/cpr) — для HTTP-запросов к Telegram и NOAA API...И [nlohmann/json](https://github.com/nlohmann/json) — для парсинга JSON данных.
 3. Источник данных: Национальное управление океанических и атмосферных исследований (NOAA, USA).
 
-
+ Бот доступен в Telegram:
+ @geomagnetic_belarus_bot
