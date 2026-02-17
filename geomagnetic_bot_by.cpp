@@ -6,15 +6,19 @@
 #include <set>
 #include <fstream> // Для работы с файлами
 #include <ctime>
+#include <cstdlib> //добавим ещё одну библиотеку, так как мне нужно скрыть токен из публичного доступа.
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
 using namespace std;
 using json = nlohmann::json;
 
-const string TOKEN = "8539400674:AAHzD4NjquWBHxy0sQ3q9OznTOF63X2aw4c"; //здесь должен быть Ваш токен, BotFather.
-const string API_URL = "https://api.telegram.org/bot" + TOKEN;
+string API_URL; //чтобы этот код был публичным и другие могли его юзать, я вместо предыдущих констант создаю эту глобал переменную, которая инициализируется в main
+//если не выкладывал бы на github, оставил бы эти константы: const string TOKEN = "мой токен" BotFather. Указаный токен недействителен, указан в целях примера. 
 
+//теперь при запуске программы нам надо вытащить токен из памяти системы. Перехожу в main.....
+
+const string API_URL = "https://api.telegram.org/bot" + TOKEN;
 set<long long> active_users;
 const string USERS_FILE = "users.txt";
 
@@ -153,6 +157,20 @@ void scheduler() {
 }
 
 int main() {
+    //добавим:
+    // 1. Пытаемся получить токен из переменной окружения
+    const char* env_token = std::getenv("TG_BOT_TOKEN");
+
+    if (env_token == nullptr) {
+        cerr << "КРИТИЧЕСКАЯ ОШИБКА: Переменная TG_BOT_TOKEN не задана!" << endl;
+        cerr << "Бот не может запуститься без ключа." << endl;
+        return 1; // Выходим с ошибкой
+    }
+
+    // 2. Формирование URL для работы...
+    string TOKEN = string(env_token);
+    API_URL = "https://api.telegram.org/bot" + TOKEN;
+
     load_users(); // Загружаем ID из файла при старте
     cout << "=== Бот запущен (База пользователей активна) ===" << endl;
     thread(scheduler).detach();
