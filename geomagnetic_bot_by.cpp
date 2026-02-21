@@ -47,6 +47,30 @@ void load_users() {
     infile.close();
 }
 
+string get_date_str(int offset) {
+    auto now = chrono::system_clock::to_time_t(chrono::system_clock::now() + chrono::hours(24 * offset));
+    tm* ltm = localtime(&now);
+    char buf[11];
+    strftime(buf, sizeof(buf), "%Y-%m-%d", ltm);
+    return string(buf);
+}
+
+string get_weekday_name(int offset) {
+    auto now = chrono::system_clock::to_time_t(chrono::system_clock::now() + chrono::hours(24 * offset));
+    tm* ltm = localtime(&now);
+    char buf[64];
+    strftime(buf, sizeof(buf), "%A", ltm);
+    string w(buf);
+    if (w == "Monday") return "Понедельник";
+    if (w == "Tuesday") return "Вторник";
+    if (w == "Wednesday") return "Среда";
+    if (w == "Thursday") return "Четверг";
+    if (w == "Friday") return "Пятница";
+    if (w == "Saturday") return "Суббота";
+    if (w == "Sunday") return "Воскресенье";
+    return w;
+}
+
 string get_current_kp() {
     auto r = cpr::Get(cpr::Url{"https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"});
     if (r.status_code != 200) return "⚠️ Ошибка связи с сервером NOAA.";
@@ -62,24 +86,40 @@ string get_current_kp() {
     } catch (...) { return "❌ Ошибка данных Kp."; }
 }
 
+string get_daily_forecast() {
+    auto r = cpr::Get(cpr::Url{"https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"});
+    if (r.status_code != 200) return "⚠️ Ошибка NOAA.";
+    try {
+        json data = json::parse(r.text);
+        string today = get_date_str(0), tomorrow = get_date_str(1);
+        string report = "📅 **Прогноз бурь: " + get_weekday_name(0) + " — " + get_weekday_name(1) + "**\n\n";
+        double max_kp = 0;
+        for (size_t i = 1; i < data.size(); ++i) {
+            string full_time = data[i][0];
+            int hour = stoi(full_time.substr(11, 2));
+            if ((full_time.substr(0, 10) == today && hour >= 9) || (full_time.substr(0, 10) == tomorrow && hour <= 9)) {
+                string kp_str = data[i][1];
+                double kp = stod(kp_str);
+                if (kp > max_kp) max_kp = kp;
+                report += "`" + (hour < 10 ? string("0") : "") + to_string(hour) + ":00` " + (hour >= 6 && hour <= 18 ? "☀️" : "🌙") + " Kp **" + kp_str.substr(0, 3) + "**" + (kp >= 5 ? " 🔴" : (kp >= 4 ? " 🟡" : "")) + "\n";
+            }
+        }
+        report += "\n📊 **Пик за сутки:** " + string(max_kp < 4 ? "🟢 Низкий" : (max_kp < 5 ? "🟡 Средний" : "🔴 ВЫСОКИЙ"));
+        return report;
+    } catch (...) { return "❌ Ошибка прогноза."; }
+}
+
 string get_weather(string city) {
     string url = "http://api.openweathermap.org/data/2.5/weather?q=" + city + ",BY&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
     auto r = cpr::Get(cpr::Url{url});
-    if (r.status_code != 200) return "⚠️ Не удалось получить погоду для города " + city;
+    if (r.status_code != 200) return "⚠️ Не удалось найти погоду для г. " + city;
     try {
         json data = json::parse(r.text);
-        string temp = to_string((int)data["main"]["temp"]);
+        int temp = data["main"]["temp"];
         string desc = data["weather"][0]["description"];
-        string feels = to_string((int)data["main"]["feels_like"]);
-        string humidity = to_string((int)data["main"]["humidity"]);
-        
-        string res = "🌡 **Погода в г. " + city + "**\n\n";
-        res += "☁️ Сейчас: " + desc + "\n";
-        res += "🌡 Температура: " + temp + "°C\n";
-        res += "🤝 Ощущается как: " + feels + "°C\n";
-        res += "💧 Влажность: " + humidity + "%\n";
-        return res;
-    } catch (...) { return "❌ Ошибка обработки данных погоды."; }
+        int feels = data["main"]["feels_like"];
+        return "🌡 **Погода в г. " + city + "**\n\n☁️ " + desc + "\n🌡 Температура: " + to_string(temp) + "°C\n🤝 Ощущается как: " + to_string(feels) + "°C";
+    } catch (...) { return "❌ Ошибка данных погоды."; }
 }
 
 void send_styled_msg(long long chat_id, const string& text) {
@@ -96,12 +136,28 @@ void send_styled_msg(long long chat_id, const string& text) {
     });
 }
 
+void scheduler() {
+    bool sent = false;
+    while (true) {
+        time_t now = chrono::system_clock::to_time_t(chrono::system_clock::now());
+        tm* gmtm = gmtime(&now);
+        int h = (gmtm->tm_hour + 3) % 24; 
+        if (h == 9 && gmtm->tm_min == 0 && !sent) {
+            string rep = "📢 **Ежедневная сводка по бурям**\n\n" + get_daily_forecast();
+            for (long long uid : active_users) send_styled_msg(uid, rep);
+            sent = true;
+        }
+        if (h == 10) sent = false;
+        this_thread::sleep_for(chrono::seconds(30));
+    }
+}
+
 int main() {
     const char* env_token = getenv("TG_BOT_TOKEN");
     if (!env_token) return 1;
     API_URL = "https://api.telegram.org/bot" + string(env_token);
     load_users();
-    cout << "=== Бот запущен (Погода + Бури) ===" << endl;
+    thread(scheduler).detach();
 
     int last_id = 0;
     while (true) {
@@ -116,18 +172,20 @@ int main() {
                     save_user(cid);
 
                     if (txt == "/start") {
-                        send_styled_msg(cid, "👋 Привет! Выберите тип прогноза:");
+                        send_styled_msg(cid, "👋 Привет! Я слежу за погодой и магнитными бурями в Беларуси.");
                     } else if (txt == "⚡️ Магнитные бури") {
-                        send_styled_msg(cid, get_current_kp());
+                        send_styled_msg(cid, get_current_kp() + "\n\n" + get_daily_forecast());
                     } else if (txt == "☁️ Прогноз погоды") {
-                        send_styled_msg(cid, "📍 Напишите название города Беларуси для прогноза погоды:");
+                        send_styled_msg(cid, "📍 Напишите название города Беларуси для получения текущей погоды:");
                     } else if (txt == "📖 Справка") {
-                        send_styled_msg(cid, "Бот показывает планетарный Kp-индекс и локальную погоду в городах РБ.");
+                        string s = "📊 **Справка**\n\nБот присылает прогноз магнитных бурь каждое утро в 09:00.\n\n";
+                        s += "Kp-индекс показывает активность магнитного поля Земли (от 0 до 9).";
+                        send_styled_msg(cid, s);
                     } else {
                         if (BELARUS_CITIES.find(txt) != BELARUS_CITIES.end()) {
                             send_styled_msg(cid, get_weather(txt));
                         } else {
-                            send_styled_msg(cid, "❌ Город **" + txt + "** не найден в базе РБ. Попробуйте Минск, Гомель...");
+                            send_styled_msg(cid, "❌ Город не найден в списке РБ. Пожалуйста, введите название города Беларуси (например, Брест).");
                         }
                     }
                 }
