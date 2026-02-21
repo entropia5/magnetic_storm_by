@@ -100,8 +100,30 @@ string get_daily_forecast() {
 }
 
 void send_styled_msg(long long chat_id, const string& text) {
-    json kb = {{"keyboard", {{{"text", "⚡️ Текущий индекс"}, {"text", "🌋 Прогноз 09:00 - 09:00"}}, {{"text", "🇧🇾 Выбрать город"}, {"text", "📖 Справка"}}}}, {"resize_keyboard", true}};
-    cpr::Post(cpr::Url{API_URL + "/sendMessage"}, cpr::Payload{{"chat_id", to_string(chat_id)}, {"text", text}, {"reply_markup", kb.dump()}, {"parse_mode", "Markdown"}});
+    json kb = {
+        {"keyboard", {
+            {{"text", "⚡️ Текущий индекс"}, {"text", "🌋 Прогноз 09:00 - 09:00"}},
+            {{"text", "🇧🇾 Выбрать город"}, {"text", "📖 Справка"}}
+        }},
+        {"resize_keyboard", true}
+    };
+
+    auto r = cpr::Post(
+        cpr::Url{API_URL + "/sendMessage"},
+        cpr::Payload{
+            {"chat_id", to_string(chat_id)},
+            {"text", text},
+            {"reply_markup", kb.dump()},
+            {"parse_mode", "Markdown"}
+        }
+    );
+
+    // Если сообщение не отправилось, мы увидим причину в консоли
+    if (r.status_code != 200) {
+        cout << "[ERROR] Ошибка отправки: " << r.status_code << " | " << r.text << endl;
+    } else {
+        cout << "[LOG] Ответ отправлен пользователю " << chat_id << endl;
+    }
 }
 
 void scheduler() {
