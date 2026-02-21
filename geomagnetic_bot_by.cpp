@@ -82,7 +82,7 @@ string get_current_kp() {
         string kp_val = last_entry[1];
         double kp = stod(kp_val);
         string res = "⚡️ **Текущий индекс Kp: " + kp_val + "**\n";
-        res += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n";
+        res += "\n";
         if (kp < 4) res += "🟢 Состояние магнитосферы cейчас спокойное.";
         else if (kp < 5) res += "🟡 Наблюдаются небольшие возмущения.";
         else res += "🔴 **ВНИМАНИЕ: Магнитная буря!**";
@@ -100,7 +100,7 @@ string get_daily_forecast() {
         string tomorrow = get_date_str(1);
         string report = "🏢 **Гомель, Беларусь**\n";
         report += "📅 **Прогноз: " + get_weekday_name(0) + " — " + get_weekday_name(1) + "**\n";
-        report += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n";
+        report += "\n";
         double max_kp = 0;
         for (size_t i = 1; i < data.size(); ++i) {
             string full_time = data[i][0];
@@ -123,7 +123,7 @@ string get_daily_forecast() {
                 report += "`" + string(hour < 10 ? "0" : "") + to_string(hour) + ":00` " + time_icon + " Kp **" + kp_str.substr(0, 3) + "**" + alert + "\n";
             }
         }
-        report += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n📊 **Пик за сутки:** ";
+        report += "\n📊 **Пик за сутки:** ";
         if (max_kp < 4) report += "🟢 Низкий\n💡 День будет отличным!";
         else if (max_kp < 5) report += "🟡 Средний\n💡 Возможна усталость.";
         else report += "🔴 ВЫСОКИЙ\n💡 Избегайте нагрузок!";
@@ -145,14 +145,27 @@ void send_styled_msg(long long chat_id, const string& text) {
 void scheduler() {
     bool sent = false;
     while (true) {
-        time_t now = chrono::system_clock::to_time_t(chrono::system_clock::now());
-        tm* ltm = localtime(&now);
-        if (ltm->tm_hour == 9 && ltm->tm_min == 0 && !sent) {
+        // текущее время в формате UTC
+        auto now = chrono::system_clock::to_time_t(chrono::system_clock::now());
+        tm* gmtm = gmtime(&now); 
+
+        int minsk_hour = (gmtm->tm_hour + 3) % 24;
+
+      
+        if (minsk_hour == 9 && gmtm->tm_min == 0 && !sent) {
             string rep = "📢 **Ежедневная сводка для Гомеля**\n\n" + get_daily_forecast();
-            for (long long uid : active_users) send_styled_msg(uid, rep);
+            for (long long uid : active_users) {
+                send_styled_msg(uid, rep);
+            }
             sent = true;
+            cout << "[Scheduler] Рассылка по Минску выполнена в 09:00" << endl;
         }
-        if (ltm->tm_hour == 10) sent = false;
+
+        
+        if (minsk_hour == 10) {
+            sent = false;
+        }
+
         this_thread::sleep_for(chrono::seconds(30));
     }
 }
