@@ -128,11 +128,11 @@ string get_daily_forecast() {
     } catch (...) { return "❌ Ошибка прогноза."; }
 }
 
-vvoid send_styled_msg(long long chat_id, const string& text) {
+void send_styled_msg(long long chat_id, const string& text) {
     json keyboard = {
         {"keyboard", {
             {{"text", "⚡️ Текущий индекс"}, {"text", "🌋 Прогноз 09:00 - 09:00"}},
-            {{"text", "🇧🇾 Выбрать город"}, {"text", "📖 Справка"}} // Второй ряд кнопок
+            {{"text", "🇧🇾 Выбрать город"}, {"text", "📖 Справка"}}
         }},
         {"resize_keyboard", true}
     };
