@@ -107,7 +107,7 @@ string parse_gfz_json(const string& json_text) {
         if (!data.contains("index_values") || data["index_values"].empty()) return "";
         double kp = data["index_values"].back().get<double>();
         string kp_val = to_string(kp).substr(0, 4);
-        string res = "🇩🇪 **Германия (GFZ): " + kp_val + "**\n\n";
+        string res = "🇩🇪 **Источник прогноза(GFZ, Германия): " + kp_val + "**\n\n";
         if (kp < 4) res += "🟢 Магнитосфера спокойная.";
         else if (kp < 5) res += "🟡 Небольшие возмущения.";
         else res += "🔴 **ВНИМАНИЕ: Магнитная буря!**";
@@ -126,7 +126,7 @@ string get_current_kp() {
                     string val = data[i][1].is_string() ? data[i][1].get<string>() : to_string(data[i][1].get<double>());
                     if (!val.empty() && val.find_first_of("0123456789") != string::npos) {
                         double kp = stod(val);
-                        string res = "🇧🇾 **Индекс сейчас (NOAA): " + val.substr(0, 4) + "**\n\n";
+                        string res = "🇺🇸 **Источник прогноза (NOAA, США): " + val.substr(0, 4) + "**\n\n";
                         if (kp < 4) res += "🟢 Магнитосфера спокойная.";
                         else if (kp < 5) res += "🟡 Небольшие возмущения.";
                         else res += "🔴 **ВНИМАНИЕ: Магнитная буря!**";
@@ -221,7 +221,7 @@ void scheduler() {
     while (true) {
         tm ltm = get_gomel_time_safe();
         if (ltm.tm_hour == 9 && ltm.tm_min == 0 && !sent) {
-            string rep = "📢 **Доброе утро! Ежедневная сводка по бурям в Республике 🇧🇾 :**\n\n" + get_daily_forecast();
+            string rep = "📢 **Доброе утро! Ежедневная сводка по бурям в Республике 🤖🇧🇾 :**\n\n" + get_daily_forecast();
             for (long long uid : active_users) send_styled_msg(uid, rep);
             sent = true;
         }
@@ -248,7 +248,7 @@ int main() {
                         long long cid = update["message"]["chat"]["id"];
                         string txt = update["message"]["text"];
                         save_user(cid);
-                        if (txt == "/start") send_styled_msg(cid, "Здравствуйте!\nЯ Ваш метео-помощник.🇧🇾");
+                        if (txt == "/start") send_styled_msg(cid, "Здравствуйте!\nЯ Ваш метео-помощник 🤖");
                         else if (txt == "⚡️ Магнитные бури") send_styled_msg(cid, get_current_kp() + "\n\n" + get_daily_forecast());
                         else if (txt == "☁️ Прогноз погоды") send_styled_msg(cid, "📍 Напишите название любого города Беларуси:");
                         else if (txt == "📖 Справка") {
