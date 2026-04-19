@@ -1,78 +1,76 @@
-Geomagnetic & Weather Telegram Bot (Republic of Belarus) 🇧🇾
+# Geomagnetic & Weather Telegram Bot (Belarus) 🇧🇾
 
-C++ Telegram-бот для мониторинга геомагнитной активности (Kp-индекс) и прогноза погоды. Проект ориентирован на жителей Беларуси, предоставляя локальные данные и глобальные прогнозы космической погоды.
+C++ Telegram bot for monitoring geomagnetic activity (Kp-index) and weather in Belarus.
 
-Основные возможности:
+## Features
 
-1. Прогноз погоды: Индивидуальный прогноз (температура, влажность, описание) для более чем 50 крупнейших городов Беларуси через OpenWeather API.
-2. Магнитные бури: Мониторинг планетарного Kp-индекса в реальном времени.
-3. Автоматическая рассылка: Ежедневный подробный прогноз магнитной активности на 24 часа каждое утро в 09:00.
-4. База данных. Надежность: Система сохранения подписчиков (база данных в users.txt) позволяет боту автоматически возобновлять рассылку после перезагрузки сервера.
+- **Geomagnetic monitoring**: Real-time Kp-index + 3-day forecast from NOAA
+- **Weather**: Any city/village in Belarus (temperature, humidity, wind, feels like)
+- **3 languages**: 🇷🇺 Русский / 🇧🇾 Беларуская / 🇬🇧 English
+- **Auto alerts**: Morning report at 9:00 + storm warnings at Kp ≥ 5.0
+- **Persistent storage**: Users, cities, language, notification settings
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Language | C++17 |
+| HTTP | CPR (libcurl) |
+| JSON | nlohmann/json |
+| Threading | Pthreads |
+| Weather API | OpenWeatherMap |
+| Geomagnetic API | NOAA SWPC |
+
+## Installation
+
+### Dependencies
+```bash
+sudo apt-get install libcurl4-openssl-dev libssl-dev
 
 
-Стек:
+### Compile
+```bash
+g++ -std=c++17 bot.cpp -o bot -lcpr -lcurl -lssl -lcrypto -pthread
 
-1. C++17
-2. Библиотеки:
-   - CPR: libcurl для HTTP-запросов.
-   - nlohmann/json: для работы с JSON-данными.
-   - Pthreads: Для многопоточной обработки рассылок в фоновом режиме.
-   
-3. Источник данных:
-   - Национальное управление океанических и атмосферных исследований (NOAA, USA).
-   - OpenWeatherMap: Текущие метеорологические данные.
+### Run
+```bash
+export TG_BOT_TOKEN="YOUR_BOT_TOKEN"
+./bot
 
 
-     Установка и запуск.
-     Зависимости: Убедитесь, что установлены libcurl, libssl и cpr.
-     - Компиляция на сервере:
-       1. g++ -std=c++17 geomagnetic_bot_by.cpp -o bot -lcpr -lcurl -lssl -lcrypto -pthread
-       2. Установите токен вашего бота в переменную окружения и запустите бинарный файл:
-          export TG_BOT_TOKEN="ВАШ_ТЕЛЕГРАМ_ТОКЕН" && ./bot
-          
+### systemd Service
 
-     Развертывание на сервере (Systemd):
+Create service file:
+```bash
+sudo nano /etc/systemd/system/geobot.service
 
-     Для обеспечения бесперебойной работы бота 24/7 и автоматического запуска при той же перезагрузке сервера (например, на Raspberry Pi как у меня) рекомендую использовать systemd.
 
-- Вводим в консоле на сервере, тем самым создаем файл службы:
-  sudo nano /etc/systemd/system/geobot.service
-
-- Вставляем содержимое, учитывая Ваш путь к директории бота на сервере.
-  /*
-
-  [Unit]
-Description=Geomagnetic & Weather Telegram Bot
+[Unit]
+Description=Geomagnetic Bot
 After=network.target
 
 [Service]
 Type=simple
-User=your_user_name
-WorkingDirectory=/path/to/your/bot/folder
-
-Environment="TG_BOT_TOKEN=ЗДЕСЬ УКАЗЫВАЕМ ТОКЕН С ТЕЛЕГРАМА"
-ExecStart=/path/to/your/bot/folder/bot
+User=your_user
+WorkingDirectory=/path/to/bot
+Environment="TG_BOT_TOKEN=YOUR_TOKEN"
+ExecStart=/path/to/bot/bot
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 
-*/
 
-Активация и запуск службы systemd:
+###Enable end Start:
+
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable geobot.service
 sudo systemctl start geobot.service
 
-Проверка статуса и логов:
-sudo systemctl status geobot.service
-sudo journalctl -u geobot.service -f
 
 
-      
-       
-Итак. Бот поддерживает все областные и крупные районные центры Беларуси: Минск, Гомель, Брест, Гродно, Витебск, Могилев, Бобруйск, Барановичи, Пинск, Жлобин, Речица и многие другие. 
 
- Бот доступен в Telegram:
- @geomagnetic_belarus_bot
+### Telegram
+Bot: @geomagnetic_belarus_bot
