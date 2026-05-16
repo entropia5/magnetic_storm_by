@@ -38,7 +38,7 @@ struct KpForecast {
     vector<double> values;
 };
 
-// --- ТЕКСТЫ НА РУССКОМ, АНГЛИЙСКОМ И БЕЛОРУССКОМ ---
+// Texts for different languages.
 map<string, map<string, string>> TEXTS = {
     {"ru", {
         {"welcome", "🌤 **Здравствуйте!**\n\nЯ бот для отслеживания магнитных бурь и погоды в Беларуси.\n\n📅 **Что я умею:**\n• 📊 Текущий индекс - состояние прямо сейчас\n• 📈 Прогноз на 3 дня - прогноз магнитных бурь\n• ☁️ Погода сейчас - погода в любом городе Беларуси\n• 📍 Мой город - установить город для утренней рассылки\n\n⏰ **Утренний отчёт** приходит в 9:00\n⚠️ **Оповещение о бурях** при Kp ≥ 5.0\n\n📍 По умолчанию город для рассылки - Минск.\nИспользуйте кнопку \"📍 Мой город\" чтобы изменить его!"},
@@ -135,7 +135,7 @@ map<string, map<string, string>> TEXTS = {
 string get_text(long long chat_id, const string& key, const string& arg1 = "", const string& arg2 = "") {
     string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
     string text = TEXTS[lang][key];
-    
+
     if (!arg1.empty()) {
         size_t pos = text.find("{}");
         if (pos != string::npos) {
@@ -151,11 +151,11 @@ string get_text(long long chat_id, const string& key, const string& arg1 = "", c
     return text;
 }
 
-// --- НОРМАЛИЗАЦИЯ НАЗВАНИЙ НАСЕЛЁННЫХ ПУНКТОВ ---
+// Normalize location name by correcting common misspellings and variations. Returns corrected city name or original input if not recognized.
 string normalize_location(const string& location) {
     if (location.empty()) return location;
-    
-    // Карта соответствий для белорусских и русских названий
+
+    // Map of common misspellings and variations to correct city names
     map<string, string> city_map = {
         {"гомель", "Гомель"}, {"гомел", "Гомель"}, {"homel", "Гомель"}, {"gomel", "Гомель"},
         {"минск", "Минск"}, {"minsk", "Минск"}, {"менск", "Мінск"},
@@ -164,41 +164,41 @@ string normalize_location(const string& location) {
         {"гродно", "Гродно"}, {"grodno", "Гродно"}, {"гародня", "Гродна"},
         {"могилёв", "Могилёв"}, {"могилев", "Могилёв"}, {"mogilev", "Могилёв"}, {"магілёў", "Магілёў"}
     };
-    
+
     string lower = location;
     for (char& c : lower) c = tolower(c);
-    
+
     if (city_map.count(lower)) {
         return city_map[lower];
     }
-    
-    // Делаем первую букву заглавной, остальные маленькие
+
+
     string normalized = location;
     for (size_t i = 0; i < normalized.length(); i++) {
         if (i == 0) normalized[i] = toupper(normalized[i]);
         else normalized[i] = tolower(normalized[i]);
     }
-    
+
     return normalized;
 }
 
-// --- ПОЛУЧЕНИЕ ПОГОДЫ ДЛЯ ЛЮБОГО НАСЕЛЁННОГО ПУНКТА БЕЛАРУСИ ---
+// Get weather for a given location. Returns formatted string with weather info or error message if city not found.
 string get_weather_by_location(string location, long long chat_id) {
     location = normalize_location(location);
-    
+
     string url = "http://api.openweathermap.org/data/2.5/weather?q=" + location + ",BY&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
     auto r = cpr::Get(cpr::Url{url}, cpr::Timeout{8000});
-    
+
     if (r.status_code != 200) {
-        // Пробуем без привязки к стране
+
         url = "http://api.openweathermap.org/data/2.5/weather?q=" + location + "&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
         r = cpr::Get(cpr::Url{url}, cpr::Timeout{8000});
-        
+
         if (r.status_code != 200) {
             return get_text(chat_id, "city_not_found");
         }
     }
-    
+
     try {
         auto data = json::parse(r.text);
         int temp = (int)round(data["main"]["temp"].get<double>());
@@ -207,27 +207,27 @@ string get_weather_by_location(string location, long long chat_id) {
         string name = data["name"];
         int humidity = data["main"]["humidity"].get<int>();
         double wind_speed = data["wind"]["speed"].get<double>();
-        
+
         string icon = "🌡️";
         if (desc.find("ясно") != string::npos || desc.find("солнечно") != string::npos) icon = "☀️";
         else if (desc.find("облачно") != string::npos) icon = "☁️";
         else if (desc.find("дождь") != string::npos) icon = "🌧️";
         else if (desc.find("снег") != string::npos) icon = "❄️";
         else if (desc.find("туман") != string::npos) icon = "🌫️";
-        
+
         string advice;
         if (temp <= -15) advice = "🥶 Сильный мороз! Одевайтесь максимально тепло!";
         else if (temp <= 0) advice = "На улице морозно, не забудьте тёплую одежду.";
         else if (temp <= 10) advice = "Прохладно, возьмите с собой куртку.";
         else if (temp <= 20) advice = "Погода приятная, наслаждайтесь прогулкой 😊";
         else advice = "На улице жарко! Пейте больше воды и носите головной убор 🥵";
-        
+
         if (desc.find("дождь") != string::npos) advice += " ☔️ Не забудьте зонт!";
         else if (desc.find("снег") != string::npos) advice += " ❄️ Осторожно, гололёд!";
-        
+
         string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
         string result;
-        
+
         if (lang == "en") {
             result = "🏘️ **" + name + ", Belarus**\n";
             result += icon + " **Weather:** " + desc + "\n";
@@ -253,28 +253,28 @@ string get_weather_by_location(string location, long long chat_id) {
             result += "💨 **Ветер:** " + to_string((int)wind_speed) + " м/с\n\n";
             result += "💡 **Совет:** " + advice;
         }
-        
+
         return result;
-    } catch (...) { 
+    } catch (...) {
         return get_text(chat_id, "city_not_found");
     }
 }
 
 string get_weather_short(string location, long long chat_id) {
     location = normalize_location(location);
-    
+
     string url = "http://api.openweathermap.org/data/2.5/weather?q=" + location + ",BY&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
     auto r = cpr::Get(cpr::Url{url}, cpr::Timeout{8000});
-    
+
     if (r.status_code != 200) {
         url = "http://api.openweathermap.org/data/2.5/weather?q=" + location + "&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
         r = cpr::Get(cpr::Url{url}, cpr::Timeout{8000});
-        
+
         if (r.status_code != 200) {
             return "⚠️ Не удалось получить погоду";
         }
     }
-    
+
     try {
         auto data = json::parse(r.text);
         int temp = (int)round(data["main"]["temp"].get<double>());
@@ -282,17 +282,17 @@ string get_weather_short(string location, long long chat_id) {
         string desc = data["weather"][0]["description"];
         int humidity = data["main"]["humidity"].get<int>();
         double wind_speed = data["wind"]["speed"].get<double>();
-        
+
         string icon = "🌡️";
         if (desc.find("ясно") != string::npos || desc.find("солнечно") != string::npos) icon = "☀️";
         else if (desc.find("облачно") != string::npos) icon = "☁️";
         else if (desc.find("дождь") != string::npos) icon = "🌧️";
         else if (desc.find("снег") != string::npos) icon = "❄️";
         else if (desc.find("туман") != string::npos) icon = "🌫️";
-        
+
         string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
         string result;
-        
+
         if (lang == "en") {
             result = icon + " **" + desc + "**\n";
             result += "🌡️ " + to_string(temp) + "°C (feels like " + to_string(feels_like) + "°C)\n";
@@ -306,10 +306,10 @@ string get_weather_short(string location, long long chat_id) {
             result += "🌡️ " + to_string(temp) + "°C (ощущается как " + to_string(feels_like) + "°C)\n";
             result += "💧 Влажность: " + to_string(humidity) + "% | 💨 Ветер: " + to_string((int)wind_speed) + " м/с";
         }
-        
+
         return result;
-    } catch (...) { 
-        return "❌ Error getting weather"; 
+    } catch (...) {
+        return "❌ Error getting weather";
     }
 }
 
@@ -341,7 +341,7 @@ void load_languages() {
     infile.close();
 }
 
-// --- НАЗВАНИЯ МЕСЯЦЕВ ---
+// month: 1-12 name. Returns month name in user's language.
 string get_month_name(int month, long long chat_id) {
     string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
     if (lang == "en") {
@@ -493,7 +493,7 @@ string get_weekday_name(int offset_days, long long chat_id) {
     char buf[64];
     strftime(buf, sizeof(buf), "%A", &ltm);
     string w(buf);
-    
+
     string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
     if (lang == "en") {
         return w;
@@ -520,7 +520,7 @@ string get_weekday_name(int offset_days, long long chat_id) {
 
 string get_kp_status(double kp, long long chat_id) {
     string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
-    
+
     if (lang == "en") {
         if (kp < 4.0) return "🟢 Magnetosphere is calm. No health risks.";
         if (kp < 5.0) return "⚠️ Minor disturbances. Possible fatigue.";
@@ -551,7 +551,7 @@ string get_kp_status(double kp, long long chat_id) {
 double fetch_current_kp() {
     auto r = cpr::Get(cpr::Url{"https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"},
                       cpr::VerifySsl{false}, cpr::Timeout{8000});
-    
+
     if (r.status_code == 200) {
         try {
             auto data = json::parse(r.text);
@@ -570,30 +570,30 @@ double fetch_current_kp() {
 
 vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
     vector<KpForecast> forecast;
-    
+
     auto r = cpr::Get(cpr::Url{"https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"},
                       cpr::VerifySsl{false}, cpr::Timeout{10000});
-    
+
     if (r.status_code != 200) {
         return forecast;
     }
-    
+
     try {
         stringstream ss(r.text);
         string line;
-        
+
         vector<vector<double>> day_values(3);
-        
+
         tm ltm = get_minsk_time();
         int current_day = ltm.tm_mday;
         int current_month = ltm.tm_mon + 1;
-        
+
         auto add_day = [](int day, int month) -> pair<int, int> {
             day++;
             int days_in_month = 31;
             if (month == 4 || month == 6 || month == 9 || month == 11) days_in_month = 30;
             else if (month == 2) days_in_month = 28;
-            
+
             if (day > days_in_month) {
                 day = 1;
                 month++;
@@ -601,26 +601,26 @@ vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
             }
             return {day, month};
         };
-        
+
         auto [day2, month2] = add_day(current_day, current_month);
         auto [day3, month3] = add_day(day2, month2);
-        
+
         stringstream ss1, ss2, ss3;
         ss1 << setw(2) << setfill('0') << current_day << "." << setw(2) << setfill('0') << current_month;
         ss2 << setw(2) << setfill('0') << day2 << "." << setw(2) << setfill('0') << month2;
         ss3 << setw(2) << setfill('0') << day3 << "." << setw(2) << setfill('0') << month3;
-        
+
         vector<string> dates = {ss1.str(), ss2.str(), ss3.str()};
-        
+
         ss.clear();
         ss.str(r.text);
-        
+
         while (getline(ss, line)) {
             if (line.find("UT") != string::npos && line.find("UTC") == string::npos) {
                 vector<double> nums;
                 stringstream line_ss(line);
                 string token;
-                
+
                 while (line_ss >> token) {
                     if (token.find("UT") != string::npos) continue;
                     if (token.find("-") != string::npos) continue;
@@ -631,7 +631,7 @@ vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
                         }
                     } catch (...) {}
                 }
-                
+
                 if (nums.size() >= 3) {
                     for (int i = 0; i < 3; i++) {
                         if (day_values[i].size() < 8) {
@@ -641,21 +641,21 @@ vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
                 }
             }
         }
-        
+
         string lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
-        
+
         for (int i = 0; i < 3; i++) {
             if (day_values[i].empty()) continue;
-            
+
             KpForecast fc;
             fc.date = dates[i];
             fc.values = day_values[i];
             fc.max_kp = 0.0;
-            
+
             for (double val : fc.values) {
                 if (val > fc.max_kp) fc.max_kp = val;
             }
-            
+
             if (lang == "en") {
                 if (fc.max_kp < 4.0) fc.status = "🟢 Quiet";
                 else if (fc.max_kp < 5.0) fc.status = "🟡 Unsettled";
@@ -681,14 +681,14 @@ vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
                 else if (fc.max_kp < 9.0) fc.status = "💀 Экстремальная буря (G4)";
                 else fc.status = "☠️ Максимальный шторм (G5)";
             }
-            
+
             forecast.push_back(fc);
         }
-        
+
     } catch (const exception& e) {
         cerr << "Ошибка парсинга прогноза: " << e.what() << endl;
     }
-    
+
     return forecast;
 }
 
@@ -696,22 +696,22 @@ string get_full_magnetic_report(long long chat_id) {
     double current_kp = fetch_current_kp();
     char kp_str[10];
     snprintf(kp_str, sizeof(kp_str), "%.1f", current_kp);
-    
+
     return get_text(chat_id, "current_index", string(kp_str), get_kp_status(current_kp, chat_id));
 }
 
 string get_forecast_text(long long chat_id) {
     vector<KpForecast> forecast = fetch_kp_forecast_3day(chat_id);
-    
+
     if (forecast.empty()) {
         return get_text(chat_id, "city_not_found");
     }
-    
+
     stringstream g;
-    
+
     for (auto& fc : forecast) {
         g << "📅 **" << fc.date << "** | Макс Kp: " << fixed << setprecision(1) << fc.max_kp << " " << fc.status << "\n";
-        
+
         if (!fc.values.empty()) {
             for (size_t i = 0; i < fc.values.size() && i < 8; i++) {
                 string color;
@@ -721,20 +721,20 @@ string get_forecast_text(long long chat_id) {
                 else if (fc.values[i] < 7.0) color = "🔴";
                 else if (fc.values[i] < 8.0) color = "🟣";
                 else color = "💀";
-                
-                g << "  " << setw(2) << (i * 3) << ":00 " << color << " " 
+
+                g << "  " << setw(2) << (i * 3) << ":00 " << color << " "
                   << fixed << setprecision(1) << fc.values[i] << "\n";
             }
         }
         g << "\n";
     }
-    
+
     return g.str();
 }
 
 void send_styled_msg(long long chat_id, const string& text) {
     string notifications_btn = is_notifications_enabled(chat_id) ? get_text(chat_id, "btn_notify_off") : get_text(chat_id, "btn_notify_on");
-    
+
     string current_lang = user_language.count(chat_id) ? user_language[chat_id] : "ru";
     string lang_btn;
     if (current_lang == "ru") {
@@ -744,7 +744,7 @@ void send_styled_msg(long long chat_id, const string& text) {
     } else {
         lang_btn = "🇷🇺 Русский";
     }
-    
+
     json kb = {
         {"keyboard", {
             {{{"text", get_text(chat_id, "btn_current")}}, {{"text", get_text(chat_id, "btn_forecast")}}},
@@ -754,41 +754,41 @@ void send_styled_msg(long long chat_id, const string& text) {
         }},
         {"resize_keyboard", true}
     };
-    cpr::Post(cpr::Url{API_URL + "/sendMessage"}, 
+    cpr::Post(cpr::Url{API_URL + "/sendMessage"},
               cpr::Payload{{"chat_id", to_string(chat_id)}, {"text", text}, {"reply_markup", kb.dump()}, {"parse_mode", "Markdown"}});
 }
 
 void send_morning_report(long long chat_id) {
     tm ltm = get_minsk_time();
-    
+
     string user_city_name = "Минск";
     if (user_city.count(chat_id) && !user_city[chat_id].empty()) {
         user_city_name = user_city[chat_id];
     }
-    
+
     double current_kp = fetch_current_kp();
     char kp_str[10];
     snprintf(kp_str, sizeof(kp_str), "%.1f", current_kp);
-    
+
     string report = get_text(chat_id, "morning_greeting") + "\n\n";
     report += "📅 " + to_string(ltm.tm_mday) + " " + get_month_name(ltm.tm_mon + 1, chat_id) + " " + to_string(ltm.tm_year + 1900) + ", " + get_weekday_name(0, chat_id) + "\n\n";
-    
+
     string weather_text = get_text(chat_id, "weather_in", user_city_name);
     report += weather_text + "\n" + get_weather_short(user_city_name, chat_id) + "\n\n";
     report += get_text(chat_id, "magnetic_status") + "\n";
     report += get_text(chat_id, "kp_now", string(kp_str), get_kp_status(current_kp, chat_id)) + "\n\n";
     report += get_text(chat_id, "forecast_3days") + "\n" + get_forecast_text(chat_id) + "\n";
     report += get_text(chat_id, "wish");
-    
+
     send_styled_msg(chat_id, report);
 }
 
 void scheduler() {
     map<long long, bool> morning_sent;
-    
+
     while (true) {
         tm ltm = get_minsk_time();
-        
+
         if (ltm.tm_hour == 9 && ltm.tm_min == 0) {
             for (long long uid : active_users) {
                 if (!morning_sent[uid]) {
@@ -801,34 +801,34 @@ void scheduler() {
         if (ltm.tm_hour == 10) {
             morning_sent.clear();
         }
-        
+
         if (ltm.tm_min % 20 == 0 && ltm.tm_min != 0) {
             double current_kp = fetch_current_kp();
             time_t now_ts = time(nullptr);
-            
-            if (current_kp >= 5.0 && 
-                (last_alert_time == 0 || 
-                 (now_ts - last_alert_time) > 10800 || 
+
+            if (current_kp >= 5.0 &&
+                (last_alert_time == 0 ||
+                 (now_ts - last_alert_time) > 10800 ||
                  current_kp > last_alert_kp + 0.9)) {
-                
+
                 char kp_str[10];
                 snprintf(kp_str, sizeof(kp_str), "%.1f", current_kp);
-                
+
                 for (long long uid : active_users) {
                     if (is_notifications_enabled(uid)) {
                         string alert = get_text(uid, "alert_title") + "\n\n";
                         alert += get_text(uid, "kp_current", string(kp_str)) + "\n\n";
                         alert += get_kp_status(current_kp, uid) + "\n\n";
                         alert += get_text(uid, "recommendations");
-                        
+
                         send_styled_msg(uid, alert);
                         this_thread::sleep_for(chrono::milliseconds(100));
                     }
                 }
-                
+
                 last_alert_kp = current_kp;
                 last_alert_time = now_ts;
-                
+
                 cout << "⚠️ Отправлено оповещение о буре! Kp: " << current_kp << endl;
             }
             if (current_kp < 4.0 && last_alert_time != 0 && (now_ts - last_alert_time) > 3600) {
@@ -837,7 +837,7 @@ void scheduler() {
                 cout << "🟢 Сброс last_alert (Kp: " << current_kp << ")" << endl;
             }
         }
-        
+
         this_thread::sleep_for(chrono::seconds(30));
     }
 }
@@ -849,25 +849,25 @@ int main() {
         return 1;
     }
     API_URL = "https://api.telegram.org/bot" + string(env_token);
-    
+
     load_users();
     load_user_cities();
     load_notifications();
     load_languages();
-    
+
     cout << "🤖 Белорусский бот для отслеживания магнитных бурь запущен!" << endl;
     cout << "📍 Поддерживаются любые населённые пункты Беларуси (города, деревни, посёлки)" << endl;
     cout << "🌐 Доступные языки: русский, белорусский, английский" << endl;
     cout << "✅ Активных пользователей: " << active_users.size() << endl;
-    
+
     thread(scheduler).detach();
     int last_id = 0;
-    
+
     while (true) {
-        auto r = cpr::Get(cpr::Url{API_URL + "/getUpdates"}, 
+        auto r = cpr::Get(cpr::Url{API_URL + "/getUpdates"},
                           cpr::Parameters{{"offset", to_string(last_id + 1)}, {"timeout", "25"}},
                           cpr::Timeout{30000});
-        
+
         if (r.status_code == 200) {
             try {
                 json data = json::parse(r.text);
@@ -876,10 +876,10 @@ int main() {
                     if (update.contains("message") && update["message"].contains("text")) {
                         long long cid = update["message"]["chat"]["id"];
                         string txt = update["message"]["text"];
-                        
+
                         save_user(cid);
-                        
-                        // Обработка смены языка
+
+                        // language selection
                         if (txt == "🇷🇺 Русский" || txt == "🇬🇧 English" || txt == "🇧🇾 Беларуская") {
                             string new_lang;
                             if (txt == "🇷🇺 Русский") {
@@ -889,7 +889,7 @@ int main() {
                             } else {
                                 new_lang = "be";
                             }
-                            
+
                             string current_lang = user_language.count(cid) ? user_language[cid] : "ru";
                             if (new_lang != current_lang) {
                                 save_user_language(cid, new_lang);
@@ -897,21 +897,21 @@ int main() {
                             }
                             continue;
                         }
-                        
-                        // Обработка ввода города для рассылки
+
+                        // input city for weather
                         if (waiting_for_city[cid]) {
                             waiting_for_city[cid] = false;
-                            
+
                             string normalized = normalize_location(txt);
-                            
+
                             string test_url = "http://api.openweathermap.org/data/2.5/weather?q=" + normalized + ",BY&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
                             auto test_r = cpr::Get(cpr::Url{test_url}, cpr::Timeout{5000});
-                            
+
                             if (test_r.status_code != 200) {
                                 test_url = "http://api.openweathermap.org/data/2.5/weather?q=" + normalized + "&units=metric&lang=ru&appid=" + WEATHER_API_KEY;
                                 test_r = cpr::Get(cpr::Url{test_url}, cpr::Timeout{5000});
                             }
-                            
+
                             if (test_r.status_code == 200) {
                                 save_user_city(cid, normalized);
                                 send_styled_msg(cid, get_text(cid, "city_saved", normalized));
@@ -920,7 +920,7 @@ int main() {
                             }
                             continue;
                         }
-                        
+
                         if (txt == "/start") {
                             send_styled_msg(cid, get_text(cid, "welcome"));
                         }
@@ -945,7 +945,7 @@ int main() {
                             bool current = is_notifications_enabled(cid);
                             bool new_status = !current;
                             save_notification_status(cid, new_status);
-                            
+
                             if (new_status) {
                                 send_styled_msg(cid, get_text(cid, "notifications_on"));
                             } else {
