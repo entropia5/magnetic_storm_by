@@ -1,8 +1,16 @@
 .DS_Store
 .env
+.env.local
 bot
+bot.new
+bot.prev
+bot_tests
 cities.txt
 users.txt
 notifications.txt
-copy_april20.cpp 
 language.txt
+live_messages.txt
+supplement_messages.txt
+bot_screens/
+*.log
+*.tmp
