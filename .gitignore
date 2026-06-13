@@ -24,5 +24,6 @@ bot_screens/
 !assets/
 !assets/screenshots/
 !assets/screenshots/*.svg
+!assets/screenshots/*.jpg
 *.log
 *.tmp

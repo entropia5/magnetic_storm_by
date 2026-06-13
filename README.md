@@ -3,29 +3,13 @@
 C++17 Telegram bot that shows current geomagnetic activity, NOAA Kp forecasts,
 weather for Belarusian locations, and scheduled storm notifications.
 
-<p align="center">
-  <img src="assets/screenshots/live-screen-demo.svg" alt="Sanitized live screen preview" width="860">
-</p>
-
-The preview above is generated for documentation only. It does not contain real
-Telegram chat ids, message ids, tokens, user data, or runtime state.
-
 ## Telegram UI Preview
 
-These screenshots are sanitized documentation previews that show the bot from a
-Telegram user's point of view. They are not copied from runtime `bot_screens/`
-and do not contain real chat ids, message ids, tokens, or user data.
+This is a real rendered bot screen prepared for README. Runtime chat ids,
+message ids, tokens, and local state are not included.
 
 <p align="center">
-  <img src="assets/screenshots/telegram-morning-user.svg" alt="Telegram morning report preview" width="760">
-</p>
-
-<p align="center">
-  <img src="assets/screenshots/telegram-weather-user.svg" alt="Telegram weather screen preview" width="760">
-</p>
-
-<p align="center">
-  <img src="assets/screenshots/telegram-alert-user.svg" alt="Telegram geomagnetic storm alert preview" width="760">
+  <img src="assets/screenshots/weather-current.jpg" alt="Rendered weather screen from the bot" width="760">
 </p>
 
 ## Features
@@ -61,7 +45,7 @@ and do not contain real chat ids, message ids, tokens, or user data.
 ├── templates/screen.html         # Telegram image HTML shell
 ├── templates/screen.css          # Telegram image visual style
 ├── deploy/geobot.service.example # systemd unit example
-├── assets/screenshots/           # Sanitized documentation previews
+├── assets/screenshots/           # README screenshots
 ├── .github/workflows/ci.yml      # GitHub Actions build/test workflow
 ├── .env.example                  # Environment variable placeholders only
 └── Makefile
