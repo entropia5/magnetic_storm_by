@@ -5,11 +5,17 @@ weather for Belarusian locations, and scheduled storm notifications.
 
 ## Telegram UI Preview
 
-This is a real rendered bot screen prepared for README. Runtime chat ids,
-message ids, tokens, and local state are not included.
+Real rendered bot screens prepared for README. Runtime chat ids, message ids,
+tokens, and local state are not included.
 
 <p align="center">
-  <img src="assets/screenshots/weather-current.jpg" alt="Rendered weather screen from the bot" width="760">
+  <img src="assets/screenshots/weather-current.jpg" alt="Rendered current weather screen from the bot" width="360">
+  <img src="assets/screenshots/geomagnetic-current.jpg" alt="Rendered current geomagnetic Kp screen from the bot" width="360">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/geomagnetic-forecast.jpg" alt="Rendered 3-day geomagnetic forecast screen from the bot" width="360">
+  <img src="assets/screenshots/storm-alert.jpg" alt="Rendered magnetic storm alert screen from the bot" width="360">
 </p>
 
 ## Features
