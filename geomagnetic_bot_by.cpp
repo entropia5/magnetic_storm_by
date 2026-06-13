@@ -476,7 +476,9 @@ string normalize_location(const string& location) {
         {"гродно", "Гродно"}, {"grodno", "Гродно"}, {"гародня", "Гродна"},
         {"Гродно", "Гродно"}, {"Гародня", "Гродна"},
         {"могилёв", "Могилёв"}, {"могилев", "Могилёв"}, {"mogilev", "Могилёв"}, {"магілёў", "Магілёў"},
-        {"Могилёв", "Могилёв"}, {"Могилев", "Могилёв"}, {"Магілёў", "Магілёў"}
+        {"Могилёв", "Могилёв"}, {"Могилев", "Могилёв"}, {"Магілёў", "Магілёў"},
+        {"копыль", "Копыль"}, {"копыл", "Копыль"}, {"капы́ль", "Копыль"}, {"kapyl", "Kapyl"}, {"kopyl", "Kapyl"},
+        {"Копыль", "Копыль"}, {"Копыл", "Копыль"}
     };
 
     string lower = ascii_lower_copy(cleaned);
@@ -855,29 +857,29 @@ string get_kp_status(double kp, long long chat_id) {
     string lang = lang_of(chat_id);
 
     if (lang == "en") {
-        if (kp < 4.0) return "🟢 Quiet geomagnetic conditions.";
-        if (kp < 5.0) return "🟡 Minor geomagnetic disturbances.";
-        if (kp < 6.0) return "🟠 G1 magnetic storm. Sensitive people may feel discomfort.";
-        if (kp < 7.0) return "🔴 G2 magnetic storm. Reduce unnecessary stress if you feel unwell.";
-        if (kp < 8.0) return "🟣 G3 strong storm. Monitor how you feel and keep routines calmer.";
-        if (kp < 9.0) return "🟣 G4 severe storm. Be attentive to wellbeing and official space-weather updates.";
-        return "🔴 G5 extreme storm. Follow official updates and seek medical help if symptoms are serious.";
+        if (kp < 4.0) return "Geomagnetic conditions are quiet now.";
+        if (kp < 5.0) return "Geomagnetic conditions are mildly disturbed now.";
+        if (kp < 6.0) return "Geomagnetic conditions now: G1 magnetic storm. Sensitive people may feel discomfort.";
+        if (kp < 7.0) return "Geomagnetic conditions now: G2 magnetic storm. Reduce unnecessary stress if you feel unwell.";
+        if (kp < 8.0) return "Geomagnetic conditions now: strong G3 storm. Monitor how you feel and keep routines calmer.";
+        if (kp < 9.0) return "Geomagnetic conditions now: severe G4 storm. Be attentive to wellbeing and official space-weather updates.";
+        return "Geomagnetic conditions now: extreme G5 storm. Follow official updates and seek medical help if symptoms are serious.";
     } else if (lang == "be") {
-        if (kp < 4.0) return "🟢 Спакойная геамагнітная абстаноўка.";
-        if (kp < 5.0) return "🟡 Невялікія геамагнітныя ўзрушэнні.";
-        if (kp < 6.0) return "🟠 Магнітная бура G1. Адчувальныя людзі могуць адчуваць дыскамфорт.";
-        if (kp < 7.0) return "🔴 Магнітная бура G2. Калі самаадчуванне горшае, знізьце лішнія нагрузкі.";
-        if (kp < 8.0) return "🟣 Моцная бура G3. Сачыце за самаадчуваннем і зрабіце дзень спакайнейшым.";
-        if (kp < 9.0) return "🟣 Вельмі моцная бура G4. Будзьце ўважлівыя да сябе і афіцыйных абнаўленняў.";
-        return "🔴 Экстрэмальная бура G5. Сачыце за афіцыйнымі абнаўленнямі і звяртайцеся па меддапамогу пры сур'ёзных сімптомах.";
+        if (kp < 4.0) return "Цяпер геамагнітная абстаноўка спакойная.";
+        if (kp < 5.0) return "Цяпер геамагнітная абстаноўка слаба ўзрушаная.";
+        if (kp < 6.0) return "Цяпер геамагнітная абстаноўка: магнітная бура G1. Адчувальныя людзі могуць адчуваць дыскамфорт.";
+        if (kp < 7.0) return "Цяпер геамагнітная абстаноўка: магнітная бура G2. Калі самаадчуванне горшае, знізьце лішнія нагрузкі.";
+        if (kp < 8.0) return "Цяпер геамагнітная абстаноўка: моцная бура G3. Сачыце за самаадчуваннем і зрабіце дзень спакайнейшым.";
+        if (kp < 9.0) return "Цяпер геамагнітная абстаноўка: вельмі моцная бура G4. Будзьце ўважлівыя да сябе і афіцыйных абнаўленняў.";
+        return "Цяпер геамагнітная абстаноўка: экстрэмальная бура G5. Сачыце за афіцыйнымі абнаўленнямі і звяртайцеся па меддапамогу пры сур'ёзных сімптомах.";
     } else {
-        if (kp < 4.0) return "🟢 Спокойная геомагнитная обстановка.";
-        if (kp < 5.0) return "🟡 Небольшие геомагнитные возмущения.";
-        if (kp < 6.0) return "🟠 Магнитная буря G1. Чувствительные люди могут ощущать дискомфорт.";
-        if (kp < 7.0) return "🔴 Магнитная буря G2. Если самочувствие хуже, снизьте лишние нагрузки.";
-        if (kp < 8.0) return "🟣 Сильная буря G3. Следите за самочувствием и сделайте день спокойнее.";
-        if (kp < 9.0) return "🟣 Очень сильная буря G4. Будьте внимательны к себе и официальным обновлениям.";
-        return "🔴 Экстремальная буря G5. Следите за официальными обновлениями и обращайтесь за медпомощью при серьёзных симптомах.";
+        if (kp < 4.0) return "Сейчас геомагнитная обстановка спокойная.";
+        if (kp < 5.0) return "Сейчас геомагнитная обстановка слегка возмущённая.";
+        if (kp < 6.0) return "Сейчас геомагнитная обстановка: магнитная буря G1. Чувствительные люди могут ощущать дискомфорт.";
+        if (kp < 7.0) return "Сейчас геомагнитная обстановка: магнитная буря G2. Если самочувствие хуже, снизьте лишние нагрузки.";
+        if (kp < 8.0) return "Сейчас геомагнитная обстановка: сильная буря G3. Следите за самочувствием и сделайте день спокойнее.";
+        if (kp < 9.0) return "Сейчас геомагнитная обстановка: очень сильная буря G4. Будьте внимательны к себе и официальным обновлениям.";
+        return "Сейчас геомагнитная обстановка: экстремальная буря G5. Следите за официальными обновлениями и обращайтесь за медпомощью при серьёзных симптомах.";
     }
 }
 
@@ -1253,6 +1255,133 @@ string format_precipitation(const WeatherForecastSlot& slot, long long chat_id) 
     return localize(chat_id, "без осадков", "без ападкаў", "dry");
 }
 
+string kp_slot_hour(size_t index) {
+    stringstream hour;
+    hour << setw(2) << setfill('0') << (int)(index * 3) << ":00";
+    return hour.str();
+}
+
+string morning_kp_detail(long long chat_id, double current_kp, const vector<KpForecast>& forecast) {
+    string text = localize(chat_id,
+        "Сейчас Kp " + format_double_1(current_kp) + " - " + kp_short_label(current_kp, chat_id) + ".",
+        "Цяпер Kp " + format_double_1(current_kp) + " - " + kp_short_label(current_kp, chat_id) + ".",
+        "Current Kp is " + format_double_1(current_kp) + " - " + kp_short_label(current_kp, chat_id) + ".");
+
+    if (forecast.empty() || forecast.front().values.empty()) {
+        text += " " + localize(chat_id,
+            "Диапазон Kp на день сейчас недоступен.",
+            "Дыяпазон Kp на дзень цяпер недаступны.",
+            "The daily Kp range is currently unavailable.");
+        return text;
+    }
+
+    const KpForecast& today = forecast.front();
+    double min_kp = today.values.front();
+    double max_kp = today.values.front();
+    size_t min_index = 0;
+    size_t max_index = 0;
+    for (size_t i = 0; i < today.values.size(); i++) {
+        if (today.values[i] < min_kp) {
+            min_kp = today.values[i];
+            min_index = i;
+        }
+        if (today.values[i] > max_kp) {
+            max_kp = today.values[i];
+            max_index = i;
+        }
+    }
+
+    text += " " + localize(chat_id,
+        "По прогнозу NOAA на сегодня минимум ожидается Kp " + format_double_1(min_kp) +
+            " около " + kp_slot_hour(min_index) + ", максимум - Kp " + format_double_1(max_kp) +
+            " около " + kp_slot_hour(max_index) + ".",
+        "Паводле прагнозу NOAA на сёння мінімум чакаецца Kp " + format_double_1(min_kp) +
+            " каля " + kp_slot_hour(min_index) + ", максімум - Kp " + format_double_1(max_kp) +
+            " каля " + kp_slot_hour(max_index) + ".",
+        "NOAA forecast for today expects a minimum of Kp " + format_double_1(min_kp) +
+            " around " + kp_slot_hour(min_index) + " and a maximum of Kp " + format_double_1(max_kp) +
+            " around " + kp_slot_hour(max_index) + ".");
+
+    if (max_kp >= 5.0) {
+        text += " " + localize(chat_id,
+            "В течение дня возможна магнитная буря уровня " + storm_level_label(max_kp) + ".",
+            "На працягу дня магчыма магнітная бура ўзроўню " + storm_level_label(max_kp) + ".",
+            "A " + storm_level_label(max_kp) + " geomagnetic storm is possible during the day.");
+    } else if (max_kp >= 4.0) {
+        text += " " + localize(chat_id,
+            "До уровня бури не доходит, но возможны слабые возмущения.",
+            "Да ўзроўню буры не даходзіць, але магчымыя слабыя ўзрушэнні.",
+            "Storm level is not expected, but weak disturbances are possible.");
+    } else {
+        text += " " + localize(chat_id,
+            "Магнитная буря по дневному прогнозу не ожидается.",
+            "Магнітная бура паводле дзённага прагнозу не чакаецца.",
+            "No geomagnetic storm is expected in the daily forecast.");
+    }
+
+    return text;
+}
+
+string morning_weather_detail(long long chat_id, const WeatherInfo& weather, const vector<WeatherForecastSlot>& slots) {
+    string text = localize(chat_id,
+        "Погода сейчас в городе " + weather.name + ": " + weather.description + ", " +
+            to_string(weather.temp) + "°C, ощущается как " + to_string(weather.feels_like) +
+            "°C, ветер " + to_string((int)round(weather.wind_speed)) + " " + wind_unit(chat_id) + ".",
+        "Надвор'е цяпер у горадзе " + weather.name + ": " + weather.description + ", " +
+            to_string(weather.temp) + "°C, адчуваецца як " + to_string(weather.feels_like) +
+            "°C, вецер " + to_string((int)round(weather.wind_speed)) + " " + wind_unit(chat_id) + ".",
+        "Weather now in " + weather.name + ": " + weather.description + ", " +
+            to_string(weather.temp) + "°C, feels like " + to_string(weather.feels_like) +
+            "°C, wind " + to_string((int)round(weather.wind_speed)) + " " + wind_unit(chat_id) + ".");
+
+    if (slots.empty()) {
+        text += " " + localize(chat_id,
+            "Почасовой прогноз погоды сейчас недоступен.",
+            "Пагадзінны прагноз надвор'я цяпер недаступны.",
+            "The hourly weather forecast is currently unavailable.");
+        return text;
+    }
+
+    int min_temp = slots.front().temp;
+    int max_temp = slots.front().temp;
+    int max_pop = slots.front().pop;
+    double max_precip_mm = slots.front().rain_mm + slots.front().snow_mm;
+    double max_wind = slots.front().wind_speed;
+    const WeatherForecastSlot* last_slot = &slots.front();
+
+    for (const auto& slot : slots) {
+        min_temp = min(min_temp, slot.temp);
+        max_temp = max(max_temp, slot.temp);
+        max_pop = max(max_pop, slot.pop);
+        max_precip_mm = max(max_precip_mm, slot.rain_mm + slot.snow_mm);
+        max_wind = max(max_wind, slot.wind_speed);
+        last_slot = &slot;
+    }
+
+    string range = min_temp == max_temp
+        ? to_string(min_temp) + "°C"
+        : to_string(min_temp) + "..." + to_string(max_temp) + "°C";
+
+    string precipitation = max_precip_mm >= 0.1
+        ? format_double_1(max_precip_mm) + " мм"
+        : (max_pop > 0
+            ? to_string(max_pop) + "%"
+            : localize(chat_id, "без заметных осадков", "без прыкметных ападкаў", "no notable precipitation"));
+
+    text += " " + localize(chat_id,
+        "В ближайшие часы ожидается " + range + "; к " + last_slot->time + " вероятнее всего " +
+            last_slot->description + ", осадки: " + precipitation + ", ветер до " +
+            to_string((int)round(max_wind)) + " " + wind_unit(chat_id) + ".",
+        "У найбліжэйшыя гадзіны чакаецца " + range + "; да " + last_slot->time + " найбольш верагодна " +
+            last_slot->description + ", ападкі: " + precipitation + ", вецер да " +
+            to_string((int)round(max_wind)) + " " + wind_unit(chat_id) + ".",
+        "In the next hours expect " + range + "; by " + last_slot->time + " conditions are likely " +
+            last_slot->description + ", precipitation: " + precipitation + ", wind up to " +
+            to_string((int)round(max_wind)) + " " + wind_unit(chat_id) + ".");
+
+    return text;
+}
+
 string forecast_bursts_summary(const KpForecast& fc, long long chat_id) {
     if (fc.values.empty()) {
         return localize(chat_id,
@@ -1399,7 +1528,7 @@ json make_inline_keyboard(long long chat_id, int forecast_page = -1, int forecas
         if (forecast_page + 1 < forecast_total) {
             string next_text = page_callback == "morning"
                 ? (forecast_page == 0
-                    ? localize(chat_id, "Прогноз →", "Прагноз →", "Forecast →")
+                    ? localize(chat_id, "Прогноз на 3 дня →", "Прагноз на 3 дні →", "3-day forecast →")
                     : localize(chat_id, "Дальше →", "Далей →", "Next →"))
                 : get_text(chat_id, "btn_forecast_next");
             nav_row.push_back({{"text", next_text}, {"callback_data", page_callback + ":" + to_string(forecast_page + 1)}});
@@ -1698,8 +1827,96 @@ string screen_css() {
             line-height: 0.95;
             font-weight: 900;
         }
-        .alert-mode .app { background: linear-gradient(180deg, #211719 0%, #151719 100%); }
+        .screen-morning,
+        .screen-morning .app { width: 1800px; }
+        .screen-morning .ornament { display: none; }
+        .screen-morning .content { padding: 32px 24px 34px; }
+        .screen-morning .subtitle { max-width: none; }
+        .screen-morning h1 {
+            margin: 24px 0 10px;
+            font-size: 92px;
+        }
+        .screen-morning .subtitle {
+            font-size: 46px;
+            margin-bottom: 18px;
+        }
+        .screen-morning .hero { margin: 18px 0 22px; }
+        .screen-morning .kp-card {
+            width: 430px;
+            min-height: 252px;
+            padding: 24px;
+        }
+        .screen-morning .kp-label { font-size: 34px; }
+        .screen-morning .kp-value {
+            font-size: 128px;
+            margin-top: 14px;
+        }
+        .screen-morning .kp-state {
+            font-size: 34px;
+            margin-top: 12px;
+        }
+        .screen-morning .panel {
+            width: 1304px;
+            min-height: 252px;
+            margin-left: 18px;
+            padding: 26px 30px;
+            font-size: 52px;
+            line-height: 1.22;
+        }
+        .screen-morning .weather,
+        .screen-morning .forecast-grid,
+        .screen-morning .forecast-card { width: 100%; }
+        .screen-morning .weather {
+            margin: 20px 0;
+            padding: 24px;
+        }
+        .screen-morning .weather-city { font-size: 76px; }
+        .screen-morning .weather-desc { font-size: 46px; }
+        .screen-morning .weather-icon { font-size: 104px; }
+        .screen-morning .weather-temp { font-size: 154px; }
+        .screen-morning .metric {
+            padding: 18px;
+        }
+        .screen-morning .metric small { font-size: 30px; }
+        .screen-morning .metric b { font-size: 46px; }
+        .screen-morning .weather-strip-title {
+            margin-top: 22px;
+            font-size: 44px;
+        }
+        .screen-morning .weather-slot {
+            width: 23.95%;
+            min-height: 226px;
+            margin-right: 1.4%;
+            padding: 16px 14px;
+        }
+        .screen-morning .weather-slot-time { font-size: 32px; }
+        .screen-morning .weather-slot-icon { font-size: 52px; }
+        .screen-morning .weather-slot-temp { font-size: 58px; }
+        .screen-morning .weather-slot-desc { font-size: 27px; }
+        .screen-morning .weather-slot-meta { font-size: 26px; }
+        .screen-morning .forecast-card {
+            padding: 28px 26px;
+        }
+        .screen-morning .forecast-date { font-size: 58px; }
+        .screen-morning .forecast-stat small { font-size: 34px; }
+        .screen-morning .forecast-stat b { font-size: 82px; }
+        .screen-morning .footer {
+            margin-top: 22px;
+            padding-top: 18px;
+            font-size: 32px;
+        }
+        .alert-mode .app {
+            background:
+                radial-gradient(circle at 82% 8%, rgba(201,25,36,0.42), transparent 30%),
+                radial-gradient(circle at 74% 76%, rgba(201,25,36,0.18), transparent 34%),
+                linear-gradient(180deg, #211719 0%, #151719 100%);
+        }
+        .alert-mode .flag-band { background: linear-gradient(90deg, #c91924 0 82%, #f6f7f4 82% 90%, #9e111b 90% 100%); }
+        .alert-mode .ornament { border-right-color: #c91924; box-shadow: 12px 0 44px rgba(201,25,36,0.32); }
         .alert-mode h1 { color: #ffdde0; }
+        .alert-mode .pill { border-color: rgba(255,221,224,0.34); background: rgba(201,25,36,0.16); }
+        .alert-mode .panel { border-left-color: #c91924; background: #251d1f; }
+        .alert-mode .kp-card { border-color: rgba(255,221,224,0.32); }
         .alert-mode .body { border-left-color: #c91924; background: #251d1f; }
     )CSS");
 }
@@ -1865,7 +2082,9 @@ string render_screen_image(long long chat_id, const ScreenView& view) {
     out << render_screen_html(chat_id, view);
     out.close();
 
-    string cmd = "/usr/bin/wkhtmltoimage --quiet --width 1280 --quality 92 " + shell_quote(html_path) + " " + shell_quote(image_path);
+    int render_width = view.kind == "morning" ? 1800 : 1280;
+    string cmd = "/usr/bin/wkhtmltoimage --quiet --width " + to_string(render_width) +
+                 " --quality 92 " + shell_quote(html_path) + " " + shell_quote(image_path);
     int rc = system(cmd.c_str());
     filesystem::remove(html_path);
     if (rc != 0 || !filesystem::exists(image_path)) {
@@ -2457,7 +2676,7 @@ void show_language_screen(long long chat_id) {
     upsert_live_screen(chat_id, view);
 }
 
-void show_alert_screen(long long chat_id, double current_kp) {
+void show_alert_screen(long long chat_id, double current_kp, bool force_new_message = false) {
     ScreenView view;
     view.kind = "alert";
     view.alert = current_kp >= 5.0;
@@ -2479,7 +2698,7 @@ void show_alert_screen(long long chat_id, double current_kp) {
         "Цяпер Kp " + format_double_1(current_kp) + ".",
         "Current Kp is " + format_double_1(current_kp) + ".");
     view.supplement += "\n\n" + get_current_kp_guidance(current_kp, chat_id);
-    upsert_live_screen(chat_id, view);
+    upsert_live_screen(chat_id, view, force_new_message);
 }
 
 void send_morning_report(long long chat_id, int page = 0) {
@@ -2488,8 +2707,6 @@ void send_morning_report(long long chat_id, int page = 0) {
     string user_city_name = user_city_or_default(chat_id);
 
     double current_kp = fetch_current_kp();
-    char kp_str[10];
-    snprintf(kp_str, sizeof(kp_str), "%.1f", current_kp);
 
     ScreenView view;
     view.kind = "morning";
@@ -2510,29 +2727,16 @@ void send_morning_report(long long chat_id, int page = 0) {
         view.kp = current_kp;
         view.weather = fetch_weather_info(user_city_name, chat_id);
         view.show_weather = view.weather.ok;
+        if (view.weather.ok) {
+            view.weather_slots = fetch_weather_forecast_slots(user_city_name, chat_id, 8);
+        }
         if (!forecast.empty()) {
             view.daily_storm_summary.push_back(forecast.front());
         }
-        if (kp_available(current_kp)) {
-            view.supplement = localize(chat_id,
-                "**Утренняя сводка на " + date_text + ".**",
-                "**Ранішняя зводка на " + date_text + ".**",
-                "**Morning summary for " + date_text + ".**");
-            view.supplement += "\n\nKp " + string(kp_str) + " - " + kp_short_label(current_kp, chat_id) + ".";
-            if (view.weather.ok) {
-                view.supplement += "\n" + localize(chat_id,
-                    "Погода для города " + view.weather.name + ": " + view.weather.description + ", " + to_string(view.weather.temp) + "°C.",
-                    "Надвор'е для горада " + view.weather.name + ": " + view.weather.description + ", " + to_string(view.weather.temp) + "°C.",
-                    "Weather for " + view.weather.name + ": " + view.weather.description + ", " + to_string(view.weather.temp) + "°C.");
-            }
-            view.supplement += "\n\n" + get_current_kp_guidance(current_kp, chat_id);
-            view.supplement += "\n\n" + localize(chat_id,
-                "Нажмите «Прогноз», чтобы листать магнитную обстановку по дням.",
-                "Націсніце «Прагноз», каб гартаць магнітную абстаноўку па днях.",
-                "Tap Forecast to browse geomagnetic conditions by day.");
-        } else {
-            view.supplement = kp_unavailable_text(chat_id);
-        }
+        view.supplement = localize(chat_id,
+            "**Утренняя сводка на " + date_text + ".**",
+            "**Ранішняя зводка на " + date_text + ".**",
+            "**Morning summary for " + date_text + ".**");
     } else {
         int forecast_index = page - 1;
         view.title = localize(chat_id, "Утренний прогноз", "Ранішні прагноз", "Morning forecast");
@@ -2672,8 +2876,7 @@ void handle_callback(long long chat_id, int message_id, const string& callback_i
         }
         send_morning_report(chat_id, page);
     } else if (data == "weather") {
-        set_waiting_for_weather(chat_id, true);
-        show_weather_prompt_screen(chat_id);
+        show_weather_result_screen(chat_id, user_city_or_default(chat_id), false);
     } else if (data == "mycity") {
         set_waiting_for_city(chat_id, true);
         show_city_prompt_screen(chat_id);
@@ -2788,7 +2991,7 @@ int main() {
                             }
                             if (dev_command == "testing2") {
                                 delete_telegram_message(cid, incoming_message_id);
-                                show_alert_screen(cid, 6.2);
+                                show_alert_screen(cid, 6.2, true);
                                 continue;
                             }
                         }
@@ -2857,8 +3060,7 @@ int main() {
                         }
                         if (txt == get_text(cid, "btn_weather")) {
                             clear_waiting_state(cid);
-                            set_waiting_for_weather(cid, true);
-                            show_weather_prompt_screen(cid);
+                            show_weather_result_screen(cid, user_city_or_default(cid), false);
                             continue;
                         }
                         if (txt == get_text(cid, "btn_mycity")) {
@@ -2923,6 +3125,14 @@ void expect_equal(const string& actual, const string& expected, const string& na
     }
 }
 
+void expect_contains(const string& actual, const string& needle, const string& name) {
+    if (actual.find(needle) == string::npos) {
+        cerr << "FAIL: " << name << " | expected substring=\"" << needle
+             << "\" actual=\"" << actual << "\"" << endl;
+        test_failures++;
+    }
+}
+
 int main() {
     {
         lock_guard<mutex> lock(state_mutex);
@@ -2933,6 +3143,7 @@ int main() {
 
     expect_equal(normalize_location(" gomel "), "Гомель", "normalize latin Gomel");
     expect_equal(normalize_location("Менск"), "Мінск", "normalize Belarusian Minsk variant");
+    expect_equal(normalize_location("Kopyl"), "Kapyl", "normalize Kopyl for OpenWeather");
     expect_equal(normalize_location("Несвиж"), "Несвиж", "keep unknown location");
 
     expect_true(kp_available(0.0), "Kp zero is available");
@@ -2951,6 +3162,37 @@ int main() {
     expect_equal(format_precipitation(slot, 3), "35%", "precipitation probability label");
     slot.rain_mm = 1.25;
     expect_equal(format_precipitation(slot, 1), "1.2 мм", "precipitation mm label");
+
+    KpForecast morning_fc;
+    morning_fc.max_kp = 4.2;
+    morning_fc.values = {3.0, 2.7, 3.4, 4.2};
+    string morning_kp = morning_kp_detail(1, 3.3, {morning_fc});
+    expect_contains(morning_kp, "Сейчас Kp 3.3", "morning Kp starts with current index");
+    expect_contains(morning_kp, "минимум ожидается Kp 2.7", "morning Kp includes expected minimum");
+    expect_contains(morning_kp, "максимум - Kp 4.2", "morning Kp includes expected maximum");
+
+    WeatherInfo morning_weather;
+    morning_weather.ok = true;
+    morning_weather.name = "Копыль";
+    morning_weather.description = "пасмурно";
+    morning_weather.temp = 12;
+    morning_weather.feels_like = 11;
+    morning_weather.wind_speed = 4.4;
+    WeatherForecastSlot morning_slot_a;
+    morning_slot_a.time = "09:00";
+    morning_slot_a.description = "пасмурно";
+    morning_slot_a.temp = 11;
+    morning_slot_a.wind_speed = 5.0;
+    WeatherForecastSlot morning_slot_b;
+    morning_slot_b.time = "12:00";
+    morning_slot_b.description = "небольшой дождь";
+    morning_slot_b.temp = 14;
+    morning_slot_b.pop = 60;
+    morning_slot_b.wind_speed = 6.0;
+    string morning_weather_text = morning_weather_detail(1, morning_weather, {morning_slot_a, morning_slot_b});
+    expect_contains(morning_weather_text, "Погода сейчас в городе Копыль", "morning weather includes current weather");
+    expect_contains(morning_weather_text, "11...14°C", "morning weather includes expected temperature range");
+    expect_contains(morning_weather_text, "осадки: 60%", "morning weather includes expected precipitation");
 
     expect_equal(html_escape("<b>&\"'\n"), "&lt;b&gt;&amp;&quot;&#39;<br>", "HTML escaping");
     expect_equal(markdown_to_telegram_html("**Kp** < 5 & ok"), "<b>Kp</b> &lt; 5 &amp; ok", "Telegram HTML markdown conversion");

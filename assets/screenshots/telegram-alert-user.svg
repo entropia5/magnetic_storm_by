@@ -1,0 +1,55 @@
+<svg width="900" height="620" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Telegram storm alert preview</title>
+  <desc id="desc">Sanitized Telegram user-view preview of a geomagnetic storm alert.</desc>
+  <defs>
+    <linearGradient id="chatBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#120f11"/>
+      <stop offset="1" stop-color="#211719"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.36"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="620" rx="26" fill="#0b0e10"/>
+  <rect x="22" y="22" width="856" height="576" rx="22" fill="url(#chatBg)"/>
+  <rect x="22" y="22" width="856" height="64" rx="22" fill="#2b2024"/>
+  <circle cx="62" cy="54" r="22" fill="#c91924"/>
+  <text x="62" y="62" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#fff">!</text>
+  <text x="98" y="50" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#f6f7f4">Geomagnetic Belarus Bot</text>
+  <text x="98" y="72" font-family="Arial, sans-serif" font-size="14" fill="#d7a0a6">storm alert</text>
+
+  <g transform="translate(58 116)" filter="url(#shadow)">
+    <rect width="610" height="328" rx="16" fill="#211719"/>
+    <rect width="610" height="34" rx="16" fill="#c91924"/>
+    <rect x="498" width="56" height="34" fill="#f6f7f4"/>
+    <rect x="554" width="56" height="34" rx="16" fill="#9e111b"/>
+    <rect x="0" y="34" width="52" height="294" fill="#f6f7f4"/>
+    <rect x="52" y="34" width="5" height="294" fill="#c91924"/>
+    <text x="82" y="88" font-family="Arial, sans-serif" font-size="32" font-weight="900" fill="#ffdde0">Внимание. Магнитная буря G2</text>
+    <text x="82" y="126" font-family="Arial, sans-serif" font-size="20" fill="#f0c5ca">Сейчас Kp 6.2 · умеренная магнитная буря</text>
+    <rect x="82" y="154" width="150" height="108" rx="8" fill="#9e111b"/>
+    <text x="102" y="190" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#fff">Индекс Kp</text>
+    <text x="102" y="244" font-family="Arial, sans-serif" font-size="50" font-weight="900" fill="#fff">6.2</text>
+    <rect x="250" y="154" width="286" height="108" rx="8" fill="#251d1f" stroke="#7b333b"/>
+    <text x="272" y="188" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#ffdde0">Магнитная буря G2.</text>
+    <text x="272" y="218" font-family="Arial, sans-serif" font-size="17" fill="#f0c5ca">Снизьте лишнюю нагрузку.</text>
+    <text x="272" y="246" font-family="Arial, sans-serif" font-size="17" fill="#f0c5ca">Следите за самочувствием.</text>
+    <text x="82" y="302" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#d7a0a6">Alert mode · force-new screen for testing</text>
+  </g>
+
+  <g transform="translate(58 462)">
+    <rect width="610" height="86" rx="14" fill="#2b2024"/>
+    <text x="22" y="30" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#ffdde0">Внимание. Магнитная буря G2</text>
+    <text x="22" y="56" font-family="Arial, sans-serif" font-size="15" fill="#f0c5ca">Сейчас Kp 6.2. Контролируйте давление, пульс и общее состояние.</text>
+    <text x="22" y="76" font-family="Arial, sans-serif" font-size="15" fill="#f0c5ca">При серьёзных симптомах обращайтесь за медицинской помощью.</text>
+  </g>
+
+  <g transform="translate(690 462)">
+    <rect width="150" height="36" rx="10" fill="#4b2730"/>
+    <text x="75" y="24" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#ffe5e8">Текущий индекс</text>
+    <rect y="44" width="150" height="36" rx="10" fill="#4b2730"/>
+    <text x="75" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#ffe5e8">Прогноз</text>
+  </g>
+  <text x="58" y="582" font-family="Arial, sans-serif" font-size="13" fill="#af7f86">Sanitized preview: no real chat ids, message ids, tokens, or user data.</text>
+</svg>

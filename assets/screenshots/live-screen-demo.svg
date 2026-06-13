@@ -1,0 +1,53 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Sanitized live screen preview</title>
+  <desc id="desc">Demo-only preview without real chat ids, message ids, tokens, or user data.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111416"/>
+      <stop offset="0.55" stop-color="#1b1f21"/>
+      <stop offset="1" stop-color="#111416"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="760" fill="url(#bg)"/>
+  <rect width="1280" height="34" fill="#c91924"/>
+  <rect x="794" width="96" height="34" fill="#f6f7f4"/>
+  <rect x="890" width="390" height="34" fill="#177348"/>
+  <rect x="0" y="34" width="86" height="726" fill="#f6f7f4"/>
+  <path d="M0 34h86v726H0z" fill="#f6f7f4"/>
+  <path d="M0 34l86 86v44L0 78zm0 122l86 86v44L0 200zm0 122l86 86v44L0 322zm0 122l86 86v44L0 444zm0 122l86 86v44L0 566z" fill="#c91924"/>
+  <path d="M86 34L0 120v44l86-86zm0 122L0 242v44l86-86zm0 122L0 364v44l86-86zm0 122L0 486v44l86-86zm0 122L0 608v44l86-86z" fill="#177348"/>
+  <rect x="86" y="34" width="8" height="726" fill="#177348"/>
+
+  <g transform="translate(136 70)">
+    <text x="1008" y="0" text-anchor="end" dominant-baseline="hanging" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" fill="#cfd6d2">Belarus geomagnetic monitor</text>
+    <text x="0" y="82" font-family="DejaVu Sans, Arial, sans-serif" font-size="64" font-weight="900" fill="#f6f7f4">Current conditions</text>
+    <text x="0" y="136" font-family="DejaVu Sans, Arial, sans-serif" font-size="34" font-weight="700" fill="#d8dfda">Kp index, NOAA forecast and weather context for Belarus</text>
+
+    <g transform="translate(0 190)" filter="url(#shadow)">
+      <rect width="290" height="250" rx="8" fill="#202426" stroke="#50585a" stroke-width="2"/>
+      <text x="28" y="48" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" font-weight="900" fill="#f6f7f4">Kp index</text>
+      <text x="28" y="154" font-family="DejaVu Sans, Arial, sans-serif" font-size="104" font-weight="900" fill="#f6f7f4">2.3</text>
+      <text x="28" y="215" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" font-weight="900" fill="#71d49d">Quiet</text>
+    </g>
+
+    <g transform="translate(314 190)" filter="url(#shadow)">
+      <rect width="694" height="250" rx="8" fill="#202426" stroke="#50585a" stroke-width="2"/>
+      <rect width="10" height="250" rx="5" fill="#177348"/>
+      <text x="42" y="58" font-family="DejaVu Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="#f0f3ef">Geomagnetic activity is low.</text>
+      <text x="42" y="112" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" fill="#d8dfda">No storm warning is active.</text>
+      <text x="42" y="166" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" fill="#d8dfda">Next forecast window: 3 days.</text>
+      <text x="42" y="218" font-family="DejaVu Sans, Arial, sans-serif" font-size="25" font-weight="700" fill="#aeb8b2">Demo preview: no real chat ids or message ids.</text>
+    </g>
+
+    <g transform="translate(0 474)" filter="url(#shadow)">
+      <rect width="1008" height="124" rx="8" fill="#202426" stroke="#50585a" stroke-width="2"/>
+      <rect width="10" height="124" rx="5" fill="#c91924"/>
+      <text x="42" y="48" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" font-weight="800" fill="#f0f3ef">Weather screen uses OpenWeatherMap and accepts Belarusian locations.</text>
+      <text x="42" y="92" font-family="DejaVu Sans, Arial, sans-serif" font-size="25" font-weight="700" fill="#aeb8b2">Runtime files are local-only and ignored by git.</text>
+    </g>
+  </g>
+</svg>

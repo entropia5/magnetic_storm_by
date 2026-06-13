@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            make \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libcpr-dev \
+            nlohmann-json3-dev \
+            wkhtmltopdf
+
+      - name: Ensure runtime state is not tracked
+        run: |
+          set -euo pipefail
+          for file in \
+            .env .env.local users.txt cities.txt notifications.txt \
+            language.txt live_messages.txt supplement_messages.txt; do
+            if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+              echo "::error::$file must not be tracked"
+              exit 1
+            fi
+          done
+          if git ls-files 'bot_screens/*' | grep -q .; then
+            echo "::error::bot_screens output must not be tracked"
+            exit 1
+          fi
+
+      - name: Build
+        run: make
+
+      - name: Test
+        run: make test

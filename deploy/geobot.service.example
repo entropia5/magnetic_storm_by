@@ -1,0 +1,19 @@
+[Unit]
+Description=Geomagnetic and weather Telegram bot for Belarus
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=geobot
+Group=geobot
+WorkingDirectory=/opt/magnetic_storm_by
+EnvironmentFile=/etc/magnetic_storm_by/geobot.env
+ExecStart=/opt/magnetic_storm_by/bot
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -275,6 +275,94 @@ h1 {
     line-height: 0.95;
     font-weight: 900;
 }
-.alert-mode .app { background: linear-gradient(180deg, #211719 0%, #151719 100%); }
+.screen-morning,
+.screen-morning .app { width: 1800px; }
+.screen-morning .ornament { display: none; }
+.screen-morning .content { padding: 32px 24px 34px; }
+.screen-morning .subtitle { max-width: none; }
+.screen-morning h1 {
+    margin: 24px 0 10px;
+    font-size: 92px;
+}
+.screen-morning .subtitle {
+    font-size: 46px;
+    margin-bottom: 18px;
+}
+.screen-morning .hero { margin: 18px 0 22px; }
+.screen-morning .kp-card {
+    width: 430px;
+    min-height: 252px;
+    padding: 24px;
+}
+.screen-morning .kp-label { font-size: 34px; }
+.screen-morning .kp-value {
+    font-size: 128px;
+    margin-top: 14px;
+}
+.screen-morning .kp-state {
+    font-size: 34px;
+    margin-top: 12px;
+}
+.screen-morning .panel {
+    width: 1304px;
+    min-height: 252px;
+    margin-left: 18px;
+    padding: 26px 30px;
+    font-size: 52px;
+    line-height: 1.22;
+}
+.screen-morning .weather,
+.screen-morning .forecast-grid,
+.screen-morning .forecast-card { width: 100%; }
+.screen-morning .weather {
+    margin: 20px 0;
+    padding: 24px;
+}
+.screen-morning .weather-city { font-size: 76px; }
+.screen-morning .weather-desc { font-size: 46px; }
+.screen-morning .weather-icon { font-size: 104px; }
+.screen-morning .weather-temp { font-size: 154px; }
+.screen-morning .metric {
+    padding: 18px;
+}
+.screen-morning .metric small { font-size: 30px; }
+.screen-morning .metric b { font-size: 46px; }
+.screen-morning .weather-strip-title {
+    margin-top: 22px;
+    font-size: 44px;
+}
+.screen-morning .weather-slot {
+    width: 23.95%;
+    min-height: 226px;
+    margin-right: 1.4%;
+    padding: 16px 14px;
+}
+.screen-morning .weather-slot-time { font-size: 32px; }
+.screen-morning .weather-slot-icon { font-size: 52px; }
+.screen-morning .weather-slot-temp { font-size: 58px; }
+.screen-morning .weather-slot-desc { font-size: 27px; }
+.screen-morning .weather-slot-meta { font-size: 26px; }
+.screen-morning .forecast-card {
+    padding: 28px 26px;
+}
+.screen-morning .forecast-date { font-size: 58px; }
+.screen-morning .forecast-stat small { font-size: 34px; }
+.screen-morning .forecast-stat b { font-size: 82px; }
+.screen-morning .footer {
+    margin-top: 22px;
+    padding-top: 18px;
+    font-size: 32px;
+}
+.alert-mode .app {
+    background:
+        radial-gradient(circle at 82% 8%, rgba(201,25,36,0.42), transparent 30%),
+        radial-gradient(circle at 74% 76%, rgba(201,25,36,0.18), transparent 34%),
+        linear-gradient(180deg, #211719 0%, #151719 100%);
+}
+.alert-mode .flag-band { background: linear-gradient(90deg, #c91924 0 82%, #f6f7f4 82% 90%, #9e111b 90% 100%); }
+.alert-mode .ornament { border-right-color: #c91924; box-shadow: 12px 0 44px rgba(201,25,36,0.32); }
 .alert-mode h1 { color: #ffdde0; }
+.alert-mode .pill { border-color: rgba(255,221,224,0.34); background: rgba(201,25,36,0.16); }
+.alert-mode .panel { border-left-color: #c91924; background: #251d1f; }
+.alert-mode .kp-card { border-color: rgba(255,221,224,0.32); }
 .alert-mode .body { border-left-color: #c91924; background: #251d1f; }
