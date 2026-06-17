@@ -1412,6 +1412,17 @@ string format_precipitation(const WeatherForecastSlot& slot, long long chat_id) 
     return localize(chat_id, "без осадков", "без ападкаў", "dry");
 }
 
+string format_precipitation_compact(const WeatherForecastSlot& slot, long long chat_id) {
+    double total_mm = slot.rain_mm + slot.snow_mm;
+    if (total_mm >= 0.1) {
+        return format_double_1(total_mm) + " мм";
+    }
+    if (slot.pop > 0) {
+        return to_string(slot.pop) + "%";
+    }
+    return localize(chat_id, "сухо", "суха", "dry");
+}
+
 string kp_slot_hour(size_t index) {
     stringstream hour;
     hour << setw(2) << setfill('0') << (int)(index * 3) << ":00";
@@ -1711,7 +1722,8 @@ string screen_css() {
         body {
             margin: 0;
             width: 1280px;
-            min-height: 1500px;
+            height: 1500px;
+            overflow: hidden;
             background: #0f1113;
             color: #f6f7f4;
             font-family: "DejaVu Sans", "Liberation Sans", Arial, Helvetica, sans-serif;
@@ -1719,7 +1731,7 @@ string screen_css() {
         }
         .app {
             width: 1280px;
-            min-height: 1500px;
+            height: 1500px;
             position: relative;
             overflow: hidden;
             background:
@@ -1740,7 +1752,12 @@ string screen_css() {
             border-right: 8px solid #177348;
             box-shadow: 12px 0 36px rgba(0,0,0,0.28);
         }
-        .content { padding: 46px 50px 46px 136px; }
+        .content {
+            width: 100%;
+            height: 100%;
+            padding: 46px 50px 46px 136px;
+            overflow: hidden;
+        }
         .topline {
             display: block;
             text-align: right;
@@ -1843,11 +1860,13 @@ string screen_css() {
             margin: 24px 0;
             border-top: 8px solid #c91924;
             border-bottom: 8px solid #177348;
+            overflow: hidden;
         }
         .weather-now { display: block; font-size: 0; }
         .weather-main {
             display: inline-block;
             width: 70%;
+            padding-right: 18px;
             vertical-align: top;
         }
         .weather-tempbox {
@@ -1856,8 +1875,24 @@ string screen_css() {
             vertical-align: top;
             text-align: right;
         }
-        .weather-city { font-size: 68px; font-weight: 900; margin-bottom: 10px; }
-        .weather-desc { font-size: 42px; color: #d7ded9; font-weight: 800; }
+        .weather-city {
+            max-height: 140px;
+            overflow: hidden;
+            overflow-wrap: break-word;
+            font-size: 68px;
+            line-height: 1.02;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+        .weather-desc {
+            max-height: 96px;
+            overflow: hidden;
+            overflow-wrap: break-word;
+            font-size: 42px;
+            line-height: 1.14;
+            color: #d7ded9;
+            font-weight: 800;
+        }
         .weather-temp { font-size: 138px; line-height: 0.9; font-weight: 900; text-align: right; }
         .weather-icon { font-size: 112px; text-align: right; margin-bottom: 8px; }
         .metrics {
@@ -1876,8 +1911,8 @@ string screen_css() {
             border: 1px solid rgba(246,247,244,0.10);
         }
         .metric:nth-child(3n) { margin-right: 0; }
-        .metric small { display: block; color: #a9b2ad; font-size: 29px; font-weight: 900; margin-bottom: 10px; }
-        .metric b { display: block; font-size: 44px; }
+        .metric small { display: block; color: #a9b2ad; font-size: 29px; font-weight: 900; margin-bottom: 10px; overflow-wrap: break-word; }
+        .metric b { display: block; font-size: 44px; overflow-wrap: break-word; }
         .weather-strip-title {
             margin-top: 26px;
             margin-bottom: 14px;
@@ -1903,8 +1938,64 @@ string screen_css() {
         .weather-slot-time { font-size: 31px; font-weight: 900; color: #d8dfda; }
         .weather-slot-icon { font-size: 58px; line-height: 1; margin: 10px 0 8px; }
         .weather-slot-temp { font-size: 56px; font-weight: 900; line-height: 1; }
-        .weather-slot-desc { min-height: 46px; margin-top: 8px; font-size: 25px; line-height: 1.1; color: #d6ddd8; font-weight: 800; }
-        .weather-slot-meta { margin-top: 10px; font-size: 24px; line-height: 1.2; color: #f6f7f4; font-weight: 900; }
+        .weather-slot-desc { height: 56px; overflow: hidden; overflow-wrap: break-word; margin-top: 8px; font-size: 25px; line-height: 1.1; color: #d6ddd8; font-weight: 800; }
+        .weather-slot-meta { max-height: 62px; overflow: hidden; overflow-wrap: break-word; margin-top: 10px; font-size: 24px; line-height: 1.2; color: #f6f7f4; font-weight: 900; }
+        .screen-weather .content { padding-top: 42px; padding-bottom: 34px; }
+        .screen-weather h1 {
+            margin: 24px 0 18px;
+            font-size: 82px;
+        }
+        .screen-weather .weather {
+            margin: 18px 0 0;
+            padding: 24px;
+        }
+        .screen-weather .weather-city {
+            max-height: 124px;
+            font-size: 64px;
+        }
+        .screen-weather .weather-desc {
+            max-height: 84px;
+            font-size: 38px;
+        }
+        .screen-weather .weather-icon {
+            font-size: 84px;
+            margin-bottom: 4px;
+        }
+        .screen-weather .weather-temp { font-size: 122px; }
+        .screen-weather .metrics { margin-top: 18px; }
+        .screen-weather .metric { padding: 16px 18px; }
+        .screen-weather .metric small {
+            font-size: 29px;
+            margin-bottom: 8px;
+        }
+        .screen-weather .metric b { font-size: 42px; }
+        .screen-weather .weather-strip-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 38px;
+        }
+        .screen-weather .weather-slot {
+            height: 236px;
+            min-height: 0;
+            margin-bottom: 14px;
+            padding: 14px 16px;
+        }
+        .screen-weather .weather-slot-time { font-size: 29px; }
+        .screen-weather .weather-slot-icon {
+            font-size: 38px;
+            margin: 8px 0 6px;
+        }
+        .screen-weather .weather-slot-temp { font-size: 50px; }
+        .screen-weather .weather-slot-desc {
+            height: 48px;
+            margin-top: 6px;
+            font-size: 23px;
+        }
+        .screen-weather .weather-slot-meta {
+            max-height: 56px;
+            margin-top: 8px;
+            font-size: 22px;
+        }
         .forecast-grid { display: block; margin: 24px 0; }
         .forecast-card {
             padding: 32px 34px;
@@ -1987,17 +2078,17 @@ string screen_css() {
         .screen-morning,
         .screen-morning .app { width: 1800px; }
         .screen-morning .ornament { display: none; }
-        .screen-morning .content { padding: 32px 24px 34px; }
+        .screen-morning .content { padding: 28px 24px 30px; }
         .screen-morning .subtitle { max-width: none; }
         .screen-morning h1 {
-            margin: 24px 0 10px;
-            font-size: 92px;
+            margin: 18px 0 6px;
+            font-size: 86px;
         }
         .screen-morning .subtitle {
-            font-size: 46px;
-            margin-bottom: 18px;
+            font-size: 40px;
+            margin-bottom: 12px;
         }
-        .screen-morning .hero { margin: 18px 0 22px; }
+        .screen-morning .hero { margin: 12px 0 16px; }
         .screen-morning .kp-card {
             width: 430px;
             min-height: 252px;
@@ -2024,39 +2115,85 @@ string screen_css() {
         .screen-morning .forecast-grid,
         .screen-morning .forecast-card { width: 100%; }
         .screen-morning .weather {
-            margin: 20px 0;
-            padding: 24px;
+            margin: 16px 0 0;
+            padding: 20px 24px;
         }
-        .screen-morning .weather-city { font-size: 76px; }
-        .screen-morning .weather-desc { font-size: 46px; }
-        .screen-morning .weather-icon { font-size: 104px; }
-        .screen-morning .weather-temp { font-size: 154px; }
+        .screen-morning .weather-city {
+            max-height: 92px;
+            font-size: 62px;
+        }
+        .screen-morning .weather-desc {
+            max-height: 56px;
+            font-size: 36px;
+        }
+        .screen-morning .weather-icon {
+            font-size: 76px;
+            margin-bottom: 2px;
+        }
+        .screen-morning .weather-temp { font-size: 112px; }
+        .screen-morning .metrics { margin-top: 14px; }
         .screen-morning .metric {
-            padding: 18px;
+            padding: 14px 18px;
         }
-        .screen-morning .metric small { font-size: 30px; }
-        .screen-morning .metric b { font-size: 46px; }
+        .screen-morning .metric small {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        .screen-morning .metric b { font-size: 40px; }
         .screen-morning .weather-strip-title {
-            margin-top: 22px;
-            font-size: 44px;
+            margin-top: 16px;
+            margin-bottom: 10px;
+            font-size: 34px;
         }
         .screen-morning .weather-slot {
             width: 23.95%;
-            min-height: 226px;
+            height: 222px;
+            min-height: 0;
             margin-right: 1.4%;
-            padding: 16px 14px;
+            margin-bottom: 12px;
+            padding: 12px 14px;
+            overflow: hidden;
         }
-        .screen-morning .weather-slot-time { font-size: 32px; }
-        .screen-morning .weather-slot-icon { font-size: 52px; }
-        .screen-morning .weather-slot-temp { font-size: 58px; }
-        .screen-morning .weather-slot-desc { font-size: 27px; }
-        .screen-morning .weather-slot-meta { font-size: 26px; }
+        .screen-morning .weather-slot-time { font-size: 27px; }
+        .screen-morning .weather-slot-icon {
+            font-size: 34px;
+            margin: 6px 0 4px;
+        }
+        .screen-morning .weather-slot-temp { font-size: 44px; }
+        .screen-morning .weather-slot-desc {
+            height: 42px;
+            margin-top: 4px;
+            font-size: 21px;
+        }
+        .screen-morning .weather-slot-meta {
+            max-height: 28px;
+            margin-top: 6px;
+            font-size: 21px;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
         .screen-morning .forecast-card {
-            padding: 28px 26px;
+            padding: 22px 24px;
         }
-        .screen-morning .forecast-date { font-size: 58px; }
-        .screen-morning .forecast-stat small { font-size: 34px; }
-        .screen-morning .forecast-stat b { font-size: 82px; }
+        .screen-morning .forecast-date { font-size: 46px; }
+        .screen-morning .forecast-stats {
+            margin: 14px 0 0;
+        }
+        .screen-morning .forecast-stat {
+            width: 32%;
+            min-height: 132px;
+            padding: 18px 22px;
+        }
+        .screen-morning .forecast-stat + .forecast-stat { margin-left: 2%; }
+        .screen-morning .forecast-stat small { font-size: 27px; }
+        .screen-morning .forecast-stat b { font-size: 68px; }
+        .screen-morning .forecast-stat em {
+            display: block;
+            margin-top: 6px;
+            font-size: 28px;
+            font-style: normal;
+            font-weight: 900;
+        }
         .screen-morning .footer {
             margin-top: 22px;
             padding-top: 18px;
@@ -2104,6 +2241,61 @@ string screen_body_class(const ScreenView& view) {
     return classes;
 }
 
+string kp_slot_time(size_t index) {
+    stringstream ss;
+    ss << setw(2) << setfill('0') << (int)(index * 3) << ":00";
+    return ss.str();
+}
+
+string render_daily_storm_summary_html(long long chat_id, const vector<KpForecast>& summary) {
+    if (summary.empty()) {
+        return "";
+    }
+
+    stringstream html;
+    html << "<section class='forecast-grid morning-storm-summary'>";
+    for (const auto& fc : summary) {
+        double min_kp = fc.values.empty() ? fc.max_kp : fc.values.front();
+        double max_kp = fc.values.empty() ? fc.max_kp : fc.values.front();
+        size_t min_index = 0;
+        size_t max_index = 0;
+        for (size_t i = 0; i < fc.values.size(); i++) {
+            if (fc.values[i] < min_kp) {
+                min_kp = fc.values[i];
+                min_index = i;
+            }
+            if (fc.values[i] > max_kp) {
+                max_kp = fc.values[i];
+                max_index = i;
+            }
+        }
+
+        html << "<div class='forecast-card'>";
+        html << "<div class='forecast-head'><div class='forecast-date'>"
+             << html_escape(localize(chat_id,
+                    "Магнитные бури сегодня",
+                    "Магнітныя буры сёння",
+                    "Geomagnetic storms today"))
+             << "</div></div>";
+        html << "<div class='forecast-stats'>";
+        html << "<div class='forecast-stat' style='background:" << kp_color(min_kp) << "'>";
+        html << "<small>" << html_escape(localize(chat_id, "Минимум за день", "Мінімум за дзень", "Daily minimum")) << "</small>";
+        html << "<b>" << format_double_1(min_kp) << "</b>";
+        html << "<em>" << html_escape(kp_slot_time(min_index)) << "</em></div>";
+        html << "<div class='forecast-stat' style='background:" << kp_color(max_kp) << "'>";
+        html << "<small>" << html_escape(localize(chat_id, "Максимум за день", "Максімум за дзень", "Daily maximum")) << "</small>";
+        html << "<b>" << format_double_1(max_kp) << "</b>";
+        html << "<em>" << html_escape(kp_slot_time(max_index)) << "</em></div>";
+        html << "<div class='forecast-stat forecast-peak' style='background:" << kp_color(max_kp) << "'>";
+        html << "<small>" << html_escape(localize(chat_id, "Пик дня", "Пік дня", "Daily peak")) << "</small>";
+        html << "<b>" << html_escape(kp_slot_time(max_index)) << "</b>";
+        html << "<em>Kp " << format_double_1(max_kp) << "</em></div>";
+        html << "</div></div>";
+    }
+    html << "</section>";
+    return html.str();
+}
+
 string render_screen_html(long long chat_id, const ScreenView& view) {
     stringstream html;
     string title = view.title.empty()
@@ -2125,6 +2317,10 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
         html << "</div>";
         html << "<div class='panel'>" << markdown_to_html(get_kp_status(view.kp, chat_id)) << "</div>";
         html << "</section>";
+    }
+
+    if (view.kind == "morning") {
+        html << render_daily_storm_summary_html(chat_id, view.daily_storm_summary);
     }
 
     if (view.show_weather && view.weather.ok) {
@@ -2149,11 +2345,17 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
                 html << "<div class='weather-slot-icon'>" << html_escape(slot.icon) << "</div>";
                 html << "<div class='weather-slot-temp'>" << slot.temp << "°</div>";
                 html << "<div class='weather-slot-desc'>" << html_escape(slot.description) << "</div>";
-                html << "<div class='weather-slot-meta'>"
-                     << html_escape(localize(chat_id, "Осадки", "Ападкі", "Rain")) << ": "
-                     << html_escape(format_precipitation(slot, chat_id)) << "<br>"
-                     << html_escape(localize(chat_id, "Ветер", "Вецер", "Wind")) << ": "
-                     << (int)round(slot.wind_speed) << " " << html_escape(wind_unit(chat_id)) << "</div>";
+                if (view.kind == "morning") {
+                    html << "<div class='weather-slot-meta weather-slot-meta-compact'>"
+                         << html_escape(format_precipitation_compact(slot, chat_id)) << " · "
+                         << (int)round(slot.wind_speed) << " " << html_escape(wind_unit(chat_id)) << "</div>";
+                } else {
+                    html << "<div class='weather-slot-meta'>"
+                         << html_escape(localize(chat_id, "Осадки", "Ападкі", "Rain")) << ": "
+                         << html_escape(format_precipitation(slot, chat_id)) << "<br>"
+                         << html_escape(localize(chat_id, "Ветер", "Вецер", "Wind")) << ": "
+                         << (int)round(slot.wind_speed) << " " << html_escape(wind_unit(chat_id)) << "</div>";
+                }
                 html << "</div>";
             }
             html << "</div>";
@@ -2161,27 +2363,8 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
         html << "</section>";
     }
 
-    if (!view.daily_storm_summary.empty()) {
-        html << "<section class='forecast-grid morning-storm-summary'>";
-        for (const auto& fc : view.daily_storm_summary) {
-            double min_kp = fc.values.empty() ? fc.max_kp : *min_element(fc.values.begin(), fc.values.end());
-            html << "<div class='forecast-card'>";
-            html << "<div class='forecast-head'><div class='forecast-date'>"
-                 << html_escape(localize(chat_id,
-                        "Магнитные бури сегодня",
-                        "Магнітныя буры сёння",
-                        "Geomagnetic storms today"))
-                 << "</div></div>";
-            html << "<div class='forecast-stats'>";
-            html << "<div class='forecast-stat' style='background:" << kp_color(min_kp) << "'>";
-            html << "<small>" << html_escape(localize(chat_id, "Минимум за день", "Мінімум за дзень", "Daily minimum")) << "</small>";
-            html << "<b>" << format_double_1(min_kp) << "</b></div>";
-            html << "<div class='forecast-stat' style='background:" << kp_color(fc.max_kp) << "'>";
-            html << "<small>" << html_escape(localize(chat_id, "Максимум за день", "Максімум за дзень", "Daily maximum")) << "</small>";
-            html << "<b>" << format_double_1(fc.max_kp) << "</b></div>";
-            html << "</div></div>";
-        }
-        html << "</section>";
+    if (view.kind != "morning") {
+        html << render_daily_storm_summary_html(chat_id, view.daily_storm_summary);
     }
 
     if (!view.forecast.empty()) {
@@ -2976,8 +3159,6 @@ void send_morning_report(long long chat_id, int page = 0) {
 
     string user_city_name = user_city_or_default(chat_id);
 
-    double current_kp = fetch_current_kp();
-
     ScreenView view;
     view.kind = "morning";
     view.page_callback = "morning";
@@ -2994,7 +3175,6 @@ void send_morning_report(long long chat_id, int page = 0) {
     if (page == 0) {
         view.title = localize(chat_id, "Доброе утро", "Добрай раніцы", "Good morning");
         view.subtitle = date_text;
-        view.kp = current_kp;
         view.weather = fetch_weather_info(user_city_name, chat_id);
         view.show_weather = view.weather.ok;
         if (view.weather.ok) {
@@ -3406,6 +3586,53 @@ void expect_contains(const string& actual, const string& needle, const string& n
     }
 }
 
+pair<int, int> jpeg_dimensions(const string& path) {
+    ifstream in(path, ios::binary);
+    if (!in) return {0, 0};
+
+    unsigned char marker[2] = {0, 0};
+    in.read(reinterpret_cast<char*>(marker), 2);
+    if (!in || marker[0] != 0xFF || marker[1] != 0xD8) {
+        return {0, 0};
+    }
+
+    while (in) {
+        unsigned char prefix = 0;
+        in.read(reinterpret_cast<char*>(&prefix), 1);
+        if (!in) break;
+        if (prefix != 0xFF) continue;
+
+        unsigned char code = 0;
+        do {
+            in.read(reinterpret_cast<char*>(&code), 1);
+        } while (in && code == 0xFF);
+        if (!in || code == 0xD9 || code == 0xDA) break;
+
+        unsigned char len_bytes[2] = {0, 0};
+        in.read(reinterpret_cast<char*>(len_bytes), 2);
+        if (!in) break;
+        int length = (len_bytes[0] << 8) | len_bytes[1];
+        if (length < 2) break;
+
+        bool sof = (code >= 0xC0 && code <= 0xC3)
+            || (code >= 0xC5 && code <= 0xC7)
+            || (code >= 0xC9 && code <= 0xCB)
+            || (code >= 0xCD && code <= 0xCF);
+        if (sof) {
+            unsigned char frame[5] = {0, 0, 0, 0, 0};
+            in.read(reinterpret_cast<char*>(frame), 5);
+            if (!in) break;
+            int height = (frame[1] << 8) | frame[2];
+            int width = (frame[3] << 8) | frame[4];
+            return {width, height};
+        }
+
+        in.seekg(length - 2, ios::cur);
+    }
+
+    return {0, 0};
+}
+
 int main() {
     {
         lock_guard<mutex> lock(state_mutex);
@@ -3492,6 +3719,60 @@ int main() {
         expect_true(!image_path.empty() && filesystem::exists(image_path), "JPEG render output exists");
         if (!image_path.empty()) {
             filesystem::remove(image_path);
+        }
+
+        ScreenView weather_view;
+        weather_view.kind = "weather";
+        weather_view.title = "Погода сейчас";
+        weather_view.weather.ok = true;
+        weather_view.show_weather = true;
+        weather_view.weather.name = "Очень Длинное Название Населенного Пункта Для Проверки Ширины";
+        weather_view.weather.description = "продолжительный дождь с переменной облачностью";
+        weather_view.weather.icon = "🌧️";
+        weather_view.weather.temp = 12;
+        weather_view.weather.feels_like = 9;
+        weather_view.weather.humidity = 88;
+        weather_view.weather.wind_speed = 7.4;
+        for (int i = 0; i < 8; i++) {
+            WeatherForecastSlot slot;
+            slot.time = (i % 2 == 0) ? "09:00" : "12:00";
+            slot.icon = "🌧️";
+            slot.description = "продолжительный дождь с облачностью";
+            slot.temp = 10 + i;
+            slot.pop = 80;
+            slot.wind_speed = 6.0 + i;
+            weather_view.weather_slots.push_back(slot);
+        }
+        string weather_image_path = render_screen_image(1, weather_view);
+        auto [weather_width, weather_height] = jpeg_dimensions(weather_image_path);
+        expect_equal(to_string(weather_width), "1280", "weather JPEG keeps fixed width");
+        expect_equal(to_string(weather_height), "1500", "weather JPEG keeps fixed height");
+        if (!weather_image_path.empty()) {
+            filesystem::remove(weather_image_path);
+        }
+
+        ScreenView morning_view;
+        morning_view.kind = "morning";
+        morning_view.title = "Доброе утро";
+        morning_view.subtitle = "17 июня 2026, Среда";
+        morning_view.weather = weather_view.weather;
+        morning_view.show_weather = true;
+        morning_view.weather_slots = weather_view.weather_slots;
+        KpForecast morning_forecast;
+        morning_forecast.date = "17 июня";
+        morning_forecast.max_kp = 5.8;
+        morning_forecast.values = {2.1, 2.4, 3.0, 5.8, 4.6, 3.8, 3.2, 2.7};
+        morning_view.daily_storm_summary.push_back(morning_forecast);
+        string morning_html = render_screen_html(1, morning_view);
+        expect_contains(morning_html, "Пик дня", "morning storm summary includes peak label");
+        expect_contains(morning_html, "09:00", "morning storm summary includes peak time");
+        expect_contains(morning_html, "weather-slot-meta-compact", "morning weather uses compact slot metadata");
+        string morning_image_path = render_screen_image(1, morning_view);
+        auto [morning_width, morning_height] = jpeg_dimensions(morning_image_path);
+        expect_equal(to_string(morning_width), "1800", "morning JPEG keeps fixed width");
+        expect_equal(to_string(morning_height), "1500", "morning JPEG keeps fixed height");
+        if (!morning_image_path.empty()) {
+            filesystem::remove(morning_image_path);
         }
     }
 
