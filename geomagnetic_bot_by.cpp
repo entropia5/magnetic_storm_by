@@ -34,6 +34,7 @@ const string NOTIFICATIONS_FILE = "notifications.txt";
 const string LANGUAGE_FILE = "language.txt";
 const string LIVE_MESSAGES_FILE = "live_messages.txt";
 const string SUPPLEMENT_MESSAGES_FILE = "supplement_messages.txt";
+const string BOT_STATE_FILE = "bot_state.json";
 const string SCREEN_DIR = "bot_screens";
 const string SCREEN_TEMPLATE_FILE = "templates/screen.html";
 const string SCREEN_CSS_FILE = "templates/screen.css";
@@ -321,6 +322,149 @@ bool write_lines_atomic(const string& path, const vector<string>& lines) {
     return true;
 }
 
+bool write_json_atomic(const string& path, const json& data) {
+    auto nonce = chrono::duration_cast<chrono::nanoseconds>(
+        chrono::steady_clock::now().time_since_epoch()
+    ).count();
+    string temp_path = path + ".tmp." + to_string(nonce);
+
+    {
+        ofstream outfile(temp_path, ios::trunc);
+        if (!outfile) {
+            cerr << "Не удалось открыть временный JSON-файл для записи: " << temp_path << endl;
+            return false;
+        }
+        outfile << data.dump(2) << '\n';
+        outfile.flush();
+        if (!outfile) {
+            cerr << "Не удалось записать временный JSON-файл: " << temp_path << endl;
+            filesystem::remove(temp_path);
+            return false;
+        }
+    }
+
+    error_code ec;
+    filesystem::rename(temp_path, path, ec);
+    if (ec) {
+        cerr << "Не удалось заменить JSON-файл " << path << ": " << ec.message() << endl;
+        filesystem::remove(temp_path);
+        return false;
+    }
+    return true;
+}
+
+void save_bot_state() {
+    map<long long, int> live_snapshot;
+    map<long long, int> supplement_snapshot;
+    map<long long, string> language_snapshot;
+
+    {
+        lock_guard<mutex> lock(live_message_mutex);
+        live_snapshot = live_message_id;
+        supplement_snapshot = supplement_message_id;
+    }
+    {
+        lock_guard<mutex> lock(state_mutex);
+        language_snapshot = user_language;
+    }
+
+    set<long long> chat_ids;
+    for (const auto& [chat_id, _] : live_snapshot) chat_ids.insert(chat_id);
+    for (const auto& [chat_id, _] : supplement_snapshot) chat_ids.insert(chat_id);
+    for (const auto& [chat_id, _] : language_snapshot) chat_ids.insert(chat_id);
+
+    json state;
+    state["chats"] = json::object();
+    for (long long chat_id : chat_ids) {
+        json chat_state = json::object();
+        auto live_it = live_snapshot.find(chat_id);
+        if (live_it != live_snapshot.end() && live_it->second > 0) {
+            chat_state["live_dashboard_message_id"] = live_it->second;
+        }
+        auto supplement_it = supplement_snapshot.find(chat_id);
+        if (supplement_it != supplement_snapshot.end() && supplement_it->second > 0) {
+            chat_state["last_alert_text_message_id"] = supplement_it->second;
+        }
+        auto lang_it = language_snapshot.find(chat_id);
+        if (lang_it != language_snapshot.end() && !lang_it->second.empty()) {
+            chat_state["language"] = lang_it->second;
+        }
+        if (!chat_state.empty()) {
+            state["chats"][to_string(chat_id)] = chat_state;
+        }
+    }
+
+    if (!write_json_atomic(BOT_STATE_FILE, state)) {
+        cerr << "Не удалось сохранить " << BOT_STATE_FILE << endl;
+    }
+}
+
+void load_bot_state() {
+    ifstream infile(BOT_STATE_FILE);
+    if (!infile) {
+        return;
+    }
+
+    try {
+        json state = json::parse(infile);
+        if (!state.contains("chats") || !state["chats"].is_object()) {
+            cerr << "⚠️ " << BOT_STATE_FILE << " не содержит объект chats" << endl;
+            return;
+        }
+
+        map<long long, int> loaded_live;
+        map<long long, int> loaded_supplement;
+        map<long long, string> loaded_language;
+
+        for (const auto& item : state["chats"].items()) {
+            long long chat_id = 0;
+            try {
+                chat_id = stoll(item.key());
+            } catch (...) {
+                continue;
+            }
+            if (chat_id <= 0 || !item.value().is_object()) {
+                continue;
+            }
+
+            const json& chat_state = item.value();
+            if (chat_state.contains("live_dashboard_message_id") && chat_state["live_dashboard_message_id"].is_number_integer()) {
+                int message_id = chat_state["live_dashboard_message_id"].get<int>();
+                if (message_id > 0) loaded_live[chat_id] = message_id;
+            }
+            if (chat_state.contains("last_alert_text_message_id") && chat_state["last_alert_text_message_id"].is_number_integer()) {
+                int message_id = chat_state["last_alert_text_message_id"].get<int>();
+                if (message_id > 0) loaded_supplement[chat_id] = message_id;
+            }
+            if (chat_state.contains("language") && chat_state["language"].is_string()) {
+                string lang = chat_state["language"].get<string>();
+                if (!lang.empty()) loaded_language[chat_id] = lang;
+            }
+        }
+
+        {
+            lock_guard<mutex> lock(live_message_mutex);
+            for (const auto& [chat_id, message_id] : loaded_live) {
+                live_message_id[chat_id] = message_id;
+            }
+            for (const auto& [chat_id, message_id] : loaded_supplement) {
+                supplement_message_id[chat_id] = message_id;
+            }
+        }
+        {
+            lock_guard<mutex> lock(state_mutex);
+            for (const auto& [chat_id, lang] : loaded_language) {
+                user_language[chat_id] = lang;
+            }
+        }
+
+        cout << "✅ Загружен " << BOT_STATE_FILE
+             << ": chats=" << state["chats"].size() << endl;
+    } catch (const exception& e) {
+        cerr << "⚠️ Не удалось прочитать " << BOT_STATE_FILE << ": " << e.what() << endl;
+    }
+}
+
 void set_waiting_for_city(long long chat_id, bool value) {
     lock_guard<mutex> lock(conversation_mutex);
     waiting_for_city[chat_id] = value;
@@ -597,13 +741,16 @@ vector<WeatherForecastSlot> fetch_weather_forecast_slots(string location, long l
 }
 
 void save_user_language(long long chat_id, const string& lang) {
-    lock_guard<mutex> lock(state_mutex);
-    user_language[chat_id] = lang;
     vector<string> lines;
-    for (const auto& [uid, lg] : user_language) {
-        lines.push_back(to_string(uid) + " " + lg);
+    {
+        lock_guard<mutex> lock(state_mutex);
+        user_language[chat_id] = lang;
+        for (const auto& [uid, lg] : user_language) {
+            lines.push_back(to_string(uid) + " " + lg);
+        }
     }
     write_lines_atomic(LANGUAGE_FILE, lines);
+    save_bot_state();
 }
 
 void load_languages() {
@@ -734,14 +881,21 @@ void load_notifications() {
 }
 
 void save_live_message_id(long long chat_id, int message_id) {
-    lock_guard<mutex> lock(live_message_mutex);
-    live_message_id[chat_id] = message_id;
-
     vector<string> lines;
-    for (const auto& [uid, saved_mid] : live_message_id) {
-        lines.push_back(to_string(uid) + " " + to_string(saved_mid));
+    {
+        lock_guard<mutex> lock(live_message_mutex);
+        if (message_id > 0) {
+            live_message_id[chat_id] = message_id;
+        } else {
+            live_message_id.erase(chat_id);
+        }
+
+        for (const auto& [uid, saved_mid] : live_message_id) {
+            lines.push_back(to_string(uid) + " " + to_string(saved_mid));
+        }
     }
     write_lines_atomic(LIVE_MESSAGES_FILE, lines);
+    save_bot_state();
 }
 
 int known_live_message_id(long long chat_id) {
@@ -751,18 +905,21 @@ int known_live_message_id(long long chat_id) {
 }
 
 void save_supplement_message_id(long long chat_id, int message_id) {
-    lock_guard<mutex> lock(live_message_mutex);
-    if (message_id > 0) {
-        supplement_message_id[chat_id] = message_id;
-    } else {
-        supplement_message_id.erase(chat_id);
-    }
-
     vector<string> lines;
-    for (const auto& [uid, saved_mid] : supplement_message_id) {
-        lines.push_back(to_string(uid) + " " + to_string(saved_mid));
+    {
+        lock_guard<mutex> lock(live_message_mutex);
+        if (message_id > 0) {
+            supplement_message_id[chat_id] = message_id;
+        } else {
+            supplement_message_id.erase(chat_id);
+        }
+
+        for (const auto& [uid, saved_mid] : supplement_message_id) {
+            lines.push_back(to_string(uid) + " " + to_string(saved_mid));
+        }
     }
     write_lines_atomic(SUPPLEMENT_MESSAGES_FILE, lines);
+    save_bot_state();
 }
 
 void load_live_messages() {
@@ -2126,6 +2283,41 @@ bool telegram_not_modified(const cpr::Response& response) {
     }
 }
 
+bool telegram_retryable_failure(const cpr::Response& response) {
+    if (response.status_code == 0 || response.status_code == 408 || response.status_code == 429) {
+        return true;
+    }
+    if (response.status_code >= 500 && response.status_code < 600) {
+        return true;
+    }
+
+    string text = ascii_lower_copy(response.text);
+    return text.find("timeout") != string::npos
+        || text.find("timed out") != string::npos
+        || text.find("too many requests") != string::npos
+        || text.find("bad gateway") != string::npos
+        || text.find("service unavailable") != string::npos;
+}
+
+bool telegram_edit_target_invalid(const cpr::Response& response) {
+    if (telegram_retryable_failure(response)) {
+        return false;
+    }
+
+    string text = ascii_lower_copy(response.text);
+    return text.find("message to edit not found") != string::npos
+        || text.find("message not found") != string::npos
+        || text.find("message can't be edited") != string::npos
+        || text.find("message cannot be edited") != string::npos
+        || text.find("message is not a media message") != string::npos
+        || text.find("there is no media") != string::npos
+        || text.find("there is no photo") != string::npos
+        || text.find("message is not a photo") != string::npos
+        || text.find("wrong type of the message content") != string::npos
+        || text.find("type of file mismatch") != string::npos
+        || text.find("message_id_invalid") != string::npos;
+}
+
 string telegram_error_summary(const cpr::Response& response) {
     stringstream ss;
     ss << "HTTP " << response.status_code;
@@ -2237,7 +2429,7 @@ void delete_supplement_message(long long chat_id) {
     save_supplement_message_id(chat_id, 0);
 }
 
-bool edit_supplement_message(long long chat_id, int message_id, const string& text) {
+bool edit_supplement_message(long long chat_id, int message_id, const string& text, cpr::Response* out_response = nullptr) {
     auto response = cpr::Post(
         cpr::Url{API_URL + "/editMessageText"},
         cpr::Payload{
@@ -2249,6 +2441,9 @@ bool edit_supplement_message(long long chat_id, int message_id, const string& te
         },
         cpr::Timeout{TELEGRAM_SEND_TIMEOUT_MS}
     );
+    if (out_response) {
+        *out_response = response;
+    }
 
     if (telegram_ok(response) || telegram_not_modified(response)) {
         return true;
@@ -2302,10 +2497,17 @@ void sync_supplement_message(long long chat_id, const ScreenView& view) {
 
     int message_id = known_supplement_message_id(chat_id);
     if (message_id > 0) {
-        if (edit_supplement_message(chat_id, message_id, text)) {
+        cpr::Response edit_response;
+        if (edit_supplement_message(chat_id, message_id, text, &edit_response)) {
             return;
         }
-        save_supplement_message_id(chat_id, 0);
+        if (telegram_edit_target_invalid(edit_response)) {
+            save_supplement_message_id(chat_id, 0);
+        } else {
+            cerr << "Временная/неизвестная ошибка editMessageText supplement для chat_id="
+                 << chat_id << ", новый helper не создаю" << endl;
+            return;
+        }
     }
 
     send_supplement_message(chat_id, text);
@@ -2367,8 +2569,34 @@ string fallback_text_for_screen(long long chat_id, const ScreenView& view) {
     return text;
 }
 
-bool fallback_text_message(long long chat_id, const string& text) {
-    json kb = make_inline_keyboard(chat_id);
+bool edit_live_text_message(long long chat_id, int message_id, const string& text, const json& kb, cpr::Response* out_response = nullptr) {
+    auto edit = cpr::Post(cpr::Url{API_URL + "/editMessageText"},
+                          cpr::Payload{
+                              {"chat_id", to_string(chat_id)},
+                              {"message_id", to_string(message_id)},
+                              {"text", markdown_to_telegram_html(text)},
+                              {"parse_mode", "HTML"},
+                              {"disable_web_page_preview", "true"},
+                              {"reply_markup", kb.dump()}
+                          },
+                          cpr::Timeout{TELEGRAM_SEND_TIMEOUT_MS});
+    if (out_response) {
+        *out_response = edit;
+    }
+
+    if (telegram_ok(edit) || telegram_not_modified(edit)) {
+        cout << "➡️ editMessageText live ok chat_id=" << chat_id
+             << " message_id=" << message_id << endl;
+        return true;
+    }
+
+    cerr << "editMessageText live не прошёл для chat_id=" << chat_id
+         << ", message_id=" << message_id << ": "
+         << telegram_error_summary(edit) << endl;
+    return false;
+}
+
+bool fallback_text_message(long long chat_id, const string& text, const json& kb) {
     auto sent = cpr::Post(cpr::Url{API_URL + "/sendMessage"},
                           cpr::Payload{
                               {"chat_id", to_string(chat_id)},
@@ -2394,8 +2622,7 @@ bool fallback_text_message(long long chat_id, const string& text) {
     return false;
 }
 
-bool send_plain_fallback_text(long long chat_id, const string& text) {
-    json kb = make_inline_keyboard(chat_id);
+bool send_plain_fallback_text(long long chat_id, const string& text, const json& kb) {
     auto sent = cpr::Post(cpr::Url{API_URL + "/sendMessage"},
                           cpr::Payload{
                               {"chat_id", to_string(chat_id)},
@@ -2424,16 +2651,6 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
     string image_path = render_screen_image(chat_id, view);
     string fallback_text = fallback_text_for_screen(chat_id, view);
     string caption = photo_caption_for_screen(view);
-    if (image_path.empty()) {
-        cerr << "render_screen_image вернул пустой путь, отправляю fallback text chat_id="
-             << chat_id << endl;
-        if (!fallback_text_message(chat_id, fallback_text)) {
-            send_plain_fallback_text(chat_id, fallback_text);
-        }
-        delete_supplement_message(chat_id);
-        return;
-    }
-
     json kb = make_inline_keyboard(chat_id, view.forecast_page, view.forecast_total, view.page_callback);
     int known_message_id = 0;
     {
@@ -2445,6 +2662,42 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
     if (force_new_message) {
         cout << "➡️ force new live screen chat_id=" << chat_id << endl;
         delete_supplement_message(chat_id);
+        if (known_message_id > 0) {
+            delete_telegram_message(chat_id, known_message_id);
+            save_live_message_id(chat_id, 0);
+            known_message_id = 0;
+        }
+    } else {
+        delete_supplement_message(chat_id);
+    }
+
+    if (image_path.empty()) {
+        cerr << "render_screen_image вернул пустой путь, использую fallback text chat_id="
+             << chat_id << endl;
+
+        if (known_message_id > 0 && !force_new_message) {
+            cpr::Response edit_response;
+            if (edit_live_text_message(chat_id, known_message_id, fallback_text, kb, &edit_response)) {
+                return;
+            }
+
+            if (telegram_edit_target_invalid(edit_response)) {
+                cerr << "Сохранённый live text id сброшен для chat_id=" << chat_id
+                     << " после постоянной ошибки editMessageText" << endl;
+                delete_telegram_message(chat_id, known_message_id);
+                save_live_message_id(chat_id, 0);
+                known_message_id = 0;
+            } else {
+                cerr << "Временная/неизвестная ошибка editMessageText live для chat_id=" << chat_id
+                     << ", новый экран не создаю" << endl;
+                return;
+            }
+        }
+
+        if (!fallback_text_message(chat_id, fallback_text, kb)) {
+            send_plain_fallback_text(chat_id, fallback_text, kb);
+        }
+        return;
     }
 
     if (known_message_id > 0 && !force_new_message) {
@@ -2478,7 +2731,20 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
         }
 
         cerr << "editMessageMedia не прошёл для chat_id=" << chat_id << ": "
-             << telegram_error_summary(edit) << ". Будет создан новый live screen" << endl;
+             << telegram_error_summary(edit) << endl;
+
+        if (telegram_edit_target_invalid(edit)) {
+            cerr << "Сохранённый live media id сброшен для chat_id=" << chat_id
+                 << " после постоянной ошибки editMessageMedia" << endl;
+            delete_telegram_message(chat_id, known_message_id);
+            save_live_message_id(chat_id, 0);
+            known_message_id = 0;
+        } else {
+            cerr << "Временная/неизвестная ошибка editMessageMedia для chat_id=" << chat_id
+                 << ", новый live screen не создаю" << endl;
+            filesystem::remove(image_path);
+            return;
+        }
     }
 
     cpr::Multipart photo_payload{
@@ -2512,15 +2778,19 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
     } else {
         cerr << "sendPhoto не прошёл для chat_id=" << chat_id << ": "
              << telegram_error_summary(sent) << endl;
-        bool fallback_sent = fallback_text_message(chat_id, fallback_text);
+        if (telegram_retryable_failure(sent)) {
+            cerr << "Временная ошибка sendPhoto для chat_id=" << chat_id
+                 << ", fallback sendMessage не создаю" << endl;
+            filesystem::remove(image_path);
+            return;
+        }
+
+        bool fallback_sent = fallback_text_message(chat_id, fallback_text, kb);
         if (!fallback_sent) {
-            fallback_sent = send_plain_fallback_text(chat_id, fallback_text);
+            fallback_sent = send_plain_fallback_text(chat_id, fallback_text, kb);
         }
         if (fallback_sent && known_message_id > 0) {
             delete_telegram_message(chat_id, known_message_id);
-        }
-        if (fallback_sent) {
-            delete_supplement_message(chat_id);
         }
     }
 
@@ -2843,14 +3113,16 @@ void answer_callback_query(const string& callback_id, const string& text = "") {
 void handle_callback(long long chat_id, int message_id, const string& callback_id, const string& data) {
     save_user(chat_id);
     int current_live_message_id = known_live_message_id(chat_id);
-    if (current_live_message_id <= 0) {
+    if (message_id > 0) {
+        if (current_live_message_id > 0 && current_live_message_id != message_id) {
+            cout << "↪️ live target updated from callback chat_id=" << chat_id
+                 << " callback_message_id=" << message_id
+                 << " current_live_message_id=" << current_live_message_id << endl;
+            delete_telegram_message(chat_id, current_live_message_id);
+        }
         save_live_message_id(chat_id, message_id);
-    } else if (current_live_message_id != message_id) {
-        cout << "↪️ stale callback ignored as live target chat_id=" << chat_id
-             << " callback_message_id=" << message_id
-             << " current_live_message_id=" << current_live_message_id << endl;
-        delete_telegram_message(chat_id, message_id);
     }
+    delete_supplement_message(chat_id);
     clear_waiting_state(chat_id);
 
     answer_callback_query(callback_id);
@@ -2931,6 +3203,7 @@ int main() {
     load_languages();
     load_live_messages();
     load_supplement_messages();
+    load_bot_state();
 
     cout << "🤖 Белорусский бот для отслеживания магнитных бурь запущен!" << endl;
     cout << "📍 Поддерживаются любые населённые пункты Беларуси (города, деревни, посёлки)" << endl;
@@ -3196,6 +3469,18 @@ int main() {
 
     expect_equal(html_escape("<b>&\"'\n"), "&lt;b&gt;&amp;&quot;&#39;<br>", "HTML escaping");
     expect_equal(markdown_to_telegram_html("**Kp** < 5 & ok"), "<b>Kp</b> &lt; 5 &amp; ok", "Telegram HTML markdown conversion");
+
+    cpr::Response invalid_edit;
+    invalid_edit.status_code = 400;
+    invalid_edit.text = R"({"ok":false,"description":"Bad Request: message to edit not found"})";
+    expect_true(telegram_edit_target_invalid(invalid_edit), "missing edit target is permanent");
+    expect_true(!telegram_retryable_failure(invalid_edit), "missing edit target is not retryable");
+
+    cpr::Response retryable_edit;
+    retryable_edit.status_code = 429;
+    retryable_edit.text = R"({"ok":false,"description":"Too Many Requests: retry later"})";
+    expect_true(telegram_retryable_failure(retryable_edit), "429 is retryable");
+    expect_true(!telegram_edit_target_invalid(retryable_edit), "429 does not reset live id");
 
     if (validate_screen_renderer()) {
         ScreenView view;
