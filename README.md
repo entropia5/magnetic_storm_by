@@ -174,6 +174,7 @@ The bot creates local state files in the working directory:
 - `language.txt`
 - `live_messages.txt`
 - `supplement_messages.txt`
+- `bot_state.json`
 - `bot_screens/`
 
 These files can contain Telegram chat ids, message ids, selected cities, and

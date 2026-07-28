@@ -17,6 +17,7 @@ notifications.txt
 language.txt
 live_messages.txt
 supplement_messages.txt
+bot_state.json
 bot_screens/
 *.jpg
 *.jpeg

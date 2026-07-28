@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
           for file in \
             .env .env.local users.txt cities.txt notifications.txt \
-            language.txt live_messages.txt supplement_messages.txt; do
+            language.txt live_messages.txt supplement_messages.txt bot_state.json; do
             if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
               echo "::error::$file must not be tracked"
               exit 1
