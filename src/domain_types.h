@@ -13,6 +13,7 @@ struct KpForecast {
 struct WeatherInfo {
     bool ok = false;
     std::string name;
+    std::string settlement_kind;
     std::string description;
     std::string icon;
     int temp = 0;

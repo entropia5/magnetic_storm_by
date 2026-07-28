@@ -10,6 +10,7 @@
 #include "../src/weather_utils.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -92,6 +93,7 @@ pair<int, int> jpeg_dimensions(const string& path) {
 }
 
 int main() {
+    const bool keep_test_images = std::getenv("GEOBOT_KEEP_TEST_IMAGES") != nullptr;
     {
         lock_guard<mutex> lock(state_mutex);
         user_language[1] = "ru";
@@ -169,44 +171,79 @@ int main() {
 
     if (validate_screen_renderer()) {
         ScreenView view;
-        view.title = "Render test";
-        view.subtitle = "JPEG screen generation";
-        view.body = "Body";
+        view.title = "Магнитные бури сейчас";
+        view.subtitle = "Состояние геомагнитного поля";
+        view.body = "**Спокойная геомагнитная обстановка.** Можно сохранять обычный режим дня.";
         view.kp = 3.3;
         string image_path = render_screen_image(1, view);
         expect_true(!image_path.empty() && filesystem::exists(image_path), "JPEG render output exists");
-        if (!image_path.empty()) {
+        if (!keep_test_images && !image_path.empty()) {
             filesystem::remove(image_path);
         }
 
         ScreenView weather_view;
         weather_view.kind = "weather";
-        weather_view.title = "Погода сейчас";
+        weather_view.title = "Погода сейчас:";
         weather_view.weather.ok = true;
         weather_view.show_weather = true;
-        weather_view.weather.name = "Очень Длинное Название Населенного Пункта Для Проверки Ширины";
-        weather_view.weather.description = "продолжительный дождь с переменной облачностью";
-        weather_view.weather.icon = "🌧️";
-        weather_view.weather.temp = 12;
-        weather_view.weather.feels_like = 9;
-        weather_view.weather.humidity = 88;
-        weather_view.weather.wind_speed = 7.4;
+        weather_view.weather.name = "Заславль";
+        weather_view.weather.settlement_kind = "town";
+        weather_view.weather.description = "ясно";
+        weather_view.weather.icon = "☀️";
+        weather_view.weather.temp = 20;
+        weather_view.weather.feels_like = 19;
+        weather_view.weather.humidity = 61;
+        weather_view.weather.wind_speed = 3.4;
+        const vector<string> weather_times = {
+            "00:00", "03:00", "06:00", "09:00",
+            "12:00", "15:00", "18:00", "21:00"
+        };
         for (int i = 0; i < 8; i++) {
             WeatherForecastSlot slot;
-            slot.time = (i % 2 == 0) ? "09:00" : "12:00";
-            slot.icon = "🌧️";
-            slot.description = "продолжительный дождь с облачностью";
-            slot.temp = 10 + i;
-            slot.pop = 80;
-            slot.wind_speed = 6.0 + i;
+            slot.time = weather_times[i];
+            slot.icon = i < 6 ? "☀️" : "🌦️";
+            slot.description = i < 6 ? "ясно" : "небольшой дождь";
+            slot.temp = 15 + i;
+            slot.pop = i < 6 ? 0 : 40;
+            slot.rain_mm = i < 6 ? 0.0 : 0.4;
+            slot.wind_speed = 3.0 + (i % 3);
             weather_view.weather_slots.push_back(slot);
         }
         string weather_image_path = render_screen_image(1, weather_view);
         auto [weather_width, weather_height] = jpeg_dimensions(weather_image_path);
         expect_equal(to_string(weather_width), "1280", "weather JPEG keeps fixed width");
         expect_equal(to_string(weather_height), "1500", "weather JPEG keeps fixed height");
-        if (!weather_image_path.empty()) {
+        if (!keep_test_images && !weather_image_path.empty()) {
             filesystem::remove(weather_image_path);
+        }
+
+        ScreenView forecast_view;
+        forecast_view.kind = "forecast";
+        forecast_view.title = "Прогноз магнитных бурь на 3 дня";
+        KpForecast public_forecast;
+        public_forecast.date = "28 июля 2026";
+        public_forecast.max_kp = 4.6;
+        public_forecast.values = {2.3, 2.7, 3.0, 3.7, 4.6, 4.0, 3.3, 2.7};
+        forecast_view.forecast.push_back(public_forecast);
+        string forecast_image_path = render_screen_image(1, forecast_view);
+        auto [forecast_width, forecast_height] = jpeg_dimensions(forecast_image_path);
+        expect_equal(to_string(forecast_width), "1280", "forecast JPEG keeps fixed width");
+        expect_equal(to_string(forecast_height), "1500", "forecast JPEG keeps fixed height");
+        if (!keep_test_images && !forecast_image_path.empty()) {
+            filesystem::remove(forecast_image_path);
+        }
+
+        ScreenView alert_view;
+        alert_view.kind = "alert";
+        alert_view.title = "Магнитная буря";
+        alert_view.subtitle = "Повышенная геомагнитная активность";
+        alert_view.body = "**Уровень G2.** Снизьте нагрузку и следите за самочувствием.";
+        alert_view.kp = 6.7;
+        alert_view.alert = true;
+        string alert_image_path = render_screen_image(1, alert_view);
+        expect_true(!alert_image_path.empty() && filesystem::exists(alert_image_path), "alert JPEG render output exists");
+        if (!keep_test_images && !alert_image_path.empty()) {
+            filesystem::remove(alert_image_path);
         }
 
         ScreenView morning_view;
@@ -228,8 +265,8 @@ int main() {
         string morning_image_path = render_screen_image(1, morning_view);
         auto [morning_width, morning_height] = jpeg_dimensions(morning_image_path);
         expect_equal(to_string(morning_width), "1800", "morning JPEG keeps fixed width");
-        expect_equal(to_string(morning_height), "1500", "morning JPEG keeps fixed height");
-        if (!morning_image_path.empty()) {
+        expect_equal(to_string(morning_height), "1500", "morning weather JPEG uses expanded height");
+        if (!keep_test_images && !morning_image_path.empty()) {
             filesystem::remove(morning_image_path);
         }
     }

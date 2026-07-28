@@ -476,7 +476,10 @@ json make_inline_keyboard(long long chat_id, int forecast_page, int forecast_tot
         if (forecast_page + 1 < forecast_total) {
             string next_text = page_callback == "morning"
                 ? (forecast_page == 0
-                    ? localize(chat_id, "Прогноз на 3 дня →", "Прагноз на 3 дні →", "3-day forecast →")
+                    ? localize(chat_id,
+                        "Магнитные бури на 3 дня →",
+                        "Магнітныя буры на 3 дні →",
+                        "3-day storm forecast →")
                     : localize(chat_id, "Дальше →", "Далей →", "Next →"))
                 : get_text(chat_id, "btn_forecast_next");
             nav_row.push_back({{"text", next_text}, {"callback_data", page_callback + ":" + to_string(forecast_page + 1)}});
@@ -495,4 +498,3 @@ json make_inline_keyboard(long long chat_id, int forecast_page, int forecast_tot
 
     return json{{"inline_keyboard", rows}};
 }
-

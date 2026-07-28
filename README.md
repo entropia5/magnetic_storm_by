@@ -5,34 +5,37 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A self-hosted C++17 Telegram bot for geomagnetic activity and local weather in
-Belarus. It combines NOAA space-weather data with OpenWeatherMap forecasts,
-renders a live visual dashboard, and sends scheduled storm notifications and
-morning reports.
+Belarus. It combines NOAA space-weather data with OpenWeatherMap forecasts and
+OpenStreetMap location metadata, renders a live visual dashboard, and sends
+scheduled storm notifications and morning reports.
 
 **Try the public bot:** [@geomagnetic_belarus_bot](https://t.me/geomagnetic_belarus_bot)
 
 ## Preview
 
 <p align="center">
-  <img src="assets/screenshots/weather-current.jpg" alt="Current weather screen" width="360">
-  <img src="assets/screenshots/geomagnetic-current.jpg" alt="Current geomagnetic activity screen" width="360">
+  <img src="assets/screenshots/weather-current.jpg" alt="Current weather and hourly forecast" width="360">
+  <img src="assets/screenshots/geomagnetic-current.jpg" alt="Current geomagnetic activity" width="360">
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/geomagnetic-forecast.jpg" alt="Three-day geomagnetic forecast" width="360">
+  <img src="assets/screenshots/geomagnetic-forecast.jpg" alt="Three-day hourly geomagnetic forecast" width="360">
   <img src="assets/screenshots/storm-alert.jpg" alt="Geomagnetic storm alert" width="360">
 </p>
 
 ## Highlights
 
 - Current planetary Kp index from NOAA SWPC.
-- Three-day geomagnetic forecast with Kp and G1–G5 storm levels.
-- Current weather and short-term forecast for Belarusian locations.
+- Three-day geomagnetic storm forecast with daily minimums, maximums, and
+  three-hour Kp intervals.
+- Current weather and an eight-slot hourly forecast for Belarusian locations.
+- Settlement-aware location labels such as city, village, and settlement,
+  including the special title “Hero City Minsk”.
 - Russian, Belarusian, and English interfaces.
 - Per-user city, language, and notification settings.
 - Morning reports and configurable geomagnetic storm alerts.
 - Live Telegram dashboard updated through message editing.
-- HTML/CSS screens rendered to JPEG with a text-only fallback.
+- Balanced HTML/CSS dashboard cards rendered to JPEG with a text-only fallback.
 - Atomic local persistence for lightweight self-hosted deployments.
 - Modular C++ architecture with automated build and test workflow.
 
@@ -49,6 +52,7 @@ flowchart LR
     Scheduler[Background scheduler] --> Screens
 
     Screens --> Weather[OpenWeatherMap client]
+    Weather --> Places[OpenStreetMap location metadata]
     Screens --> SpaceWeather[NOAA SWPC client]
     Screens --> Storage[Local state storage]
     Screens --> View[ScreenView presentation]
@@ -66,7 +70,7 @@ Important modules:
 | `bot_screens` | User-facing application scenarios |
 | `callback_handler` | Inline keyboard routing |
 | `scheduler` | Morning reports and storm checks |
-| `weather_*` | Weather requests, parsing, and normalization |
+| `weather_*` | Weather requests, forecasts, and settlement classification |
 | `geomagnetic_client` | NOAA Kp index and forecast retrieval |
 | `telegram_*` | Telegram transport, live screens, and fallbacks |
 | `screen_*` | HTML composition and JPEG rendering |
@@ -86,6 +90,7 @@ Important modules:
 | Build | GNU Make |
 | CI | GitHub Actions |
 | Weather | OpenWeatherMap |
+| Places | OpenStreetMap Nominatim |
 | Space weather | NOAA Space Weather Prediction Center |
 
 ## Repository Structure
@@ -189,8 +194,25 @@ The live dashboard is driven by:
 - `templates/screen.html` — document shell;
 - `templates/screen.css` — layout, colors, typography, and responsive variants.
 
-The templates are loaded at runtime. Visual changes therefore do not require
-recompiling the C++ application.
+The templates are loaded at runtime. CSS-only visual changes therefore do not
+require recompiling the C++ application. Changes to screen content or view
+composition still require a rebuild.
+
+### Updating the public screenshots
+
+The README uses four stable image paths:
+
+```text
+assets/screenshots/weather-current.jpg
+assets/screenshots/geomagnetic-current.jpg
+assets/screenshots/geomagnetic-forecast.jpg
+assets/screenshots/storm-alert.jpg
+```
+
+Replace these files with screenshots from the current bot version while
+keeping the same names. GitHub will then show the updated interface without
+any README link changes. Before publishing, make sure screenshots do not
+contain private chat IDs, usernames, tokens, or other personal data.
 
 ## Deployment
 
@@ -240,6 +262,7 @@ Never commit real bot tokens or API keys.
   multi-instance deployment.
 - Scheduling currently uses the Belarus time zone expected by this service.
 - Weather features depend on OpenWeatherMap availability and API limits.
+- Settlement classification depends on OpenStreetMap Nominatim availability.
 - Generated health guidance is informational and is not medical advice.
 
 ## License

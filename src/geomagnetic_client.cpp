@@ -1,4 +1,5 @@
 #include "geomagnetic_client.h"
+#include "localization.h"
 #include "time_utils.h"
 
 #include <cpr/cpr.h>
@@ -55,8 +56,9 @@ std::vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
         for (int offset = 0; offset < 3; ++offset) {
             const std::tm day = get_minsk_time(offset);
             std::ostringstream date;
-            date << std::setw(2) << std::setfill('0') << day.tm_mday << '.'
-                 << std::setw(2) << std::setfill('0') << day.tm_mon + 1;
+            date << day.tm_mday << ' '
+                 << get_month_name(day.tm_mon + 1, chat_id) << ' '
+                 << day.tm_year + 1900;
             dates.push_back(date.str());
         }
 

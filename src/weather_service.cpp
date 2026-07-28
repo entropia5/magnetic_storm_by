@@ -8,6 +8,31 @@
 
 using json = nlohmann::json;
 
+namespace {
+
+std::string settlement_kind_from_coordinates(double latitude, double longitude) {
+    const cpr::Response response = fetch_settlement_response(latitude, longitude);
+    if (response.status_code != 200) {
+        return {};
+    }
+
+    try {
+        const json data = json::parse(response.text);
+        if (!data.contains("address") || !data["address"].is_object()) {
+            return {};
+        }
+        const json& address = data["address"];
+        if (address.contains("city")) return "city";
+        if (address.contains("town")) return "town";
+        if (address.contains("village")) return "village";
+        if (address.contains("hamlet")) return "hamlet";
+    } catch (...) {
+    }
+    return {};
+}
+
+}  // namespace
+
 WeatherInfo fetch_weather_info(std::string location, long long chat_id) {
     WeatherInfo info;
     location = normalize_location(location);
@@ -36,6 +61,14 @@ WeatherInfo fetch_weather_info(std::string location, long long chat_id) {
         );
         info.humidity = data["main"]["humidity"].get<int>();
         info.wind_speed = data["wind"]["speed"].get<double>();
+        if (data.contains("coord")
+            && data["coord"].contains("lat")
+            && data["coord"].contains("lon")) {
+            info.settlement_kind = settlement_kind_from_coordinates(
+                data["coord"]["lat"].get<double>(),
+                data["coord"]["lon"].get<double>()
+            );
+        }
 
         const std::string icon_code = data["weather"][0].contains("icon")
             ? data["weather"][0]["icon"].get<std::string>()

@@ -19,8 +19,30 @@ string format_precipitation(const WeatherForecastSlot& slot, long long chat_id);
 string format_precipitation_compact(const WeatherForecastSlot& slot, long long chat_id);
 string current_minsk_datetime(long long chat_id);
 
+string weather_place_label(const WeatherInfo& weather, long long chat_id) {
+    if (weather.name == "Минск" || weather.name == "Мінск" || weather.name == "Minsk") {
+        return localize(chat_id, "город-герой Минск", "горад-герой Мінск", "Hero City Minsk");
+    }
+    if (weather.settlement_kind == "city" || weather.settlement_kind == "town") {
+        return localize(chat_id, "город ", "горад ", "city of ") + weather.name;
+    }
+    if (weather.settlement_kind == "village") {
+        return localize(chat_id, "деревня ", "вёска ", "village of ") + weather.name;
+    }
+    if (weather.settlement_kind == "hamlet") {
+        return localize(chat_id, "посёлок ", "пасёлак ", "settlement of ") + weather.name;
+    }
+    return weather.name;
+}
+
 string screen_body_class(const ScreenView& view) {
     string classes = "screen-" + view.kind;
+    if (view.kind == "morning" && view.show_weather && view.weather.ok) {
+        classes += " morning-with-weather";
+    }
+    if (view.kind == "morning" && !view.forecast.empty()) {
+        classes += " morning-forecast-page";
+    }
     if (view.alert) {
         classes += " alert-mode";
     }
@@ -64,15 +86,15 @@ string render_daily_storm_summary_html(long long chat_id, const vector<KpForecas
                     "Geomagnetic storms today"))
              << "</div></div>";
         html << "<div class='forecast-stats'>";
-        html << "<div class='forecast-stat' style='background:" << kp_color(min_kp) << "'>";
+        html << "<div class='forecast-stat' style='--kp-color:" << kp_color(min_kp) << "'>";
         html << "<small>" << html_escape(localize(chat_id, "Минимум за день", "Мінімум за дзень", "Daily minimum")) << "</small>";
         html << "<b>" << format_double_1(min_kp) << "</b>";
         html << "<em>" << html_escape(kp_slot_time(min_index)) << "</em></div>";
-        html << "<div class='forecast-stat' style='background:" << kp_color(max_kp) << "'>";
+        html << "<div class='forecast-stat' style='--kp-color:" << kp_color(max_kp) << "'>";
         html << "<small>" << html_escape(localize(chat_id, "Максимум за день", "Максімум за дзень", "Daily maximum")) << "</small>";
         html << "<b>" << format_double_1(max_kp) << "</b>";
         html << "<em>" << html_escape(kp_slot_time(max_index)) << "</em></div>";
-        html << "<div class='forecast-stat forecast-peak' style='background:" << kp_color(max_kp) << "'>";
+        html << "<div class='forecast-stat forecast-peak' style='--kp-color:" << kp_color(max_kp) << "'>";
         html << "<small>" << html_escape(localize(chat_id, "Пик дня", "Пік дня", "Daily peak")) << "</small>";
         html << "<b>" << html_escape(kp_slot_time(max_index)) << "</b>";
         html << "<em>Kp " << format_double_1(max_kp) << "</em></div>";
@@ -96,7 +118,7 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
     if (view.kp >= 0.0) {
         string color = view.alert ? "#9e111b" : kp_color(view.kp);
         html << "<section class='hero'>";
-        html << "<div class='kp-card' style='background:" << color << ";box-shadow:0 0 42px " << color << ", 0 18px 44px rgba(0,0,0,0.34)'>";
+        html << "<div class='kp-card' style='--kp-color:" << color << "'>";
         html << "<div class='kp-label'>" << html_escape(localize(chat_id, "Индекс Kp", "Індэкс Kp", "Kp index")) << "</div>";
         html << "<div class='kp-value'>" << format_double_1(view.kp) << "</div>";
         html << "<div class='kp-state'>" << html_escape(kp_short_label(view.kp, chat_id)) << "</div>";
@@ -112,7 +134,8 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
     if (view.show_weather && view.weather.ok) {
         html << "<section class='weather'>";
         html << "<div class='weather-now'>";
-        html << "<div class='weather-main'><div class='weather-city'>" << html_escape(view.weather.name) << "</div>";
+        html << "<div class='weather-main'><div class='weather-city'>"
+             << html_escape(weather_place_label(view.weather, chat_id)) << "</div>";
         html << "<div class='weather-desc'>" << html_escape(view.weather.description) << "</div></div>";
         html << "<div class='weather-tempbox'><div class='weather-icon'>" << html_escape(view.weather.icon) << "</div>";
         html << "<div class='weather-temp'>" << view.weather.temp << "°</div></div>";
@@ -160,21 +183,28 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
             html << "<div class='forecast-card'>";
             html << "<div class='forecast-head'><div class='forecast-date'>" << html_escape(fc.date) << "</div></div>";
             html << "<div class='forecast-stats'>";
-            html << "<div class='forecast-stat' style='background:" << kp_color(min_kp) << "'>";
+            html << "<div class='forecast-stat' style='--kp-color:" << kp_color(min_kp) << "'>";
             html << "<small>" << html_escape(localize(chat_id, "Минимум за день", "Мінімум за дзень", "Daily minimum")) << "</small>";
             html << "<b>" << format_double_1(min_kp) << "</b></div>";
-            html << "<div class='forecast-stat' style='background:" << kp_color(fc.max_kp) << "'>";
+            html << "<div class='forecast-stat' style='--kp-color:" << kp_color(fc.max_kp) << "'>";
             html << "<small>" << html_escape(localize(chat_id, "Максимум за день", "Максімум за дзень", "Daily maximum")) << "</small>";
             html << "<b>" << format_double_1(fc.max_kp) << "</b></div>";
             html << "</div>";
+            html << "<div class='hour-section'>";
+            html << "<div class='hour-grid-title'>"
+                 << html_escape(localize(chat_id,
+                        "Почасовой прогноз",
+                        "Пагадзінны прагноз",
+                        "Hourly forecast"))
+                 << "</div>";
             html << "<div class='hour-grid'>";
             for (size_t i = 0; i < fc.values.size() && i < 8; i++) {
                 double value = fc.values[i];
-                html << "<div class='hour-cell' style='background:" << kp_color(value) << "'>";
+                html << "<div class='hour-cell' style='--kp-color:" << kp_color(value) << "'>";
                 html << "<small>" << setw(2) << setfill('0') << (int)(i * 3) << ":00</small>";
                 html << "<b>" << format_double_1(value) << "</b></div>";
             }
-            html << "</div></div>";
+            html << "</div></div></div>";
         }
         html << "</section>";
     }
@@ -192,4 +222,3 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
         {"CSS", screen_css()}
     });
 }
-

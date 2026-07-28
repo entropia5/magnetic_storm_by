@@ -64,3 +64,18 @@ cpr::Response fetch_weather_forecast_response(
         cpr::Timeout{8000}
     );
 }
+
+cpr::Response fetch_settlement_response(double latitude, double longitude) {
+    return cpr::Get(
+        cpr::Url{"https://nominatim.openstreetmap.org/reverse"},
+        cpr::Parameters{
+            {"lat", std::to_string(latitude)},
+            {"lon", std::to_string(longitude)},
+            {"format", "jsonv2"},
+            {"addressdetails", "1"},
+            {"zoom", "14"}
+        },
+        cpr::Header{{"User-Agent", "magnetic-storm-by-bot/1.0"}},
+        cpr::Timeout{5000}
+    );
+}

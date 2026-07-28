@@ -56,7 +56,10 @@ void show_current_screen(long long chat_id) {
 void show_forecast_screen(long long chat_id, int page) {
     ScreenView view;
     view.kind = "forecast";
-    view.title = localize(chat_id, "Прогноз на 3 дня", "Прагноз на 3 дні", "3-day forecast");
+    view.title = localize(chat_id,
+        "Прогноз магнитных бурь на 3 дня",
+        "Прагноз магнітных бур на 3 дні",
+        "3-day geomagnetic storm forecast");
     vector<KpForecast> forecast = fetch_kp_forecast_3day(chat_id);
     if (forecast.empty()) {
         view.supplement = localize(chat_id,
@@ -104,7 +107,7 @@ void show_weather_result_screen(long long chat_id, const string& location, bool 
     view.kind = save_city ? "city_saved" : "weather";
     view.title = save_city
         ? localize(chat_id, "Город сохранён", "Горад захаваны", "City saved")
-        : localize(chat_id, "Погода сейчас", "Надвор'е цяпер", "Weather now");
+        : localize(chat_id, "Погода сейчас:", "Надвор'е цяпер:", "Weather now:");
 
     if (!weather_configured()) {
         view.subtitle = get_text(chat_id, "weather_api_missing");
@@ -232,11 +235,14 @@ void send_morning_report(long long chat_id, int page) {
             "**Morning summary for " + date_text + ".**");
     } else {
         int forecast_index = page - 1;
-        view.title = localize(chat_id, "Утренний прогноз", "Ранішні прагноз", "Morning forecast");
+        view.title = localize(chat_id,
+            "Прогноз магнитных бурь на 3 дня",
+            "Прагноз магнітных бур на 3 дні",
+            "3-day geomagnetic storm forecast");
         view.subtitle = localize(chat_id,
-            "День " + to_string(page) + " из " + to_string(max(1, total_pages - 1)),
-            "Дзень " + to_string(page) + " з " + to_string(max(1, total_pages - 1)),
-            "Day " + to_string(page) + " of " + to_string(max(1, total_pages - 1)));
+            "День прогноза " + to_string(page) + " из " + to_string(max(1, total_pages - 1)),
+            "Дзень прагнозу " + to_string(page) + " з " + to_string(max(1, total_pages - 1)),
+            "Forecast day " + to_string(page) + " of " + to_string(max(1, total_pages - 1)));
         if (forecast_index >= 0 && forecast_index < (int)forecast.size()) {
             view.forecast.push_back(forecast[forecast_index]);
             view.supplement = forecast_day_supplement(chat_id, forecast[forecast_index]);
@@ -248,11 +254,15 @@ void send_morning_report(long long chat_id, int page) {
         }
     }
 
-    view.footer = localize(chat_id,
-        "Утренний отчёт · " + user_city_name + " · страница " + to_string(page + 1) + " из " + to_string(total_pages),
-        "Ранішняя справаздача · " + user_city_name + " · старонка " + to_string(page + 1) + " з " + to_string(total_pages),
-        "Morning report · " + user_city_name + " · page " + to_string(page + 1) + " of " + to_string(total_pages));
+    view.footer = page == 0
+        ? localize(chat_id,
+            "Утренний отчёт · " + user_city_name + " · страница 1 из " + to_string(total_pages),
+            "Ранішняя справаздача · " + user_city_name + " · старонка 1 з " + to_string(total_pages),
+            "Morning report · " + user_city_name + " · page 1 of " + to_string(total_pages))
+        : localize(chat_id,
+            "Прогноз магнитных бурь · день " + to_string(page) + " из " + to_string(max(1, total_pages - 1)),
+            "Прагноз магнітных бур · дзень " + to_string(page) + " з " + to_string(max(1, total_pages - 1)),
+            "Geomagnetic storm forecast · day " + to_string(page) + " of " + to_string(max(1, total_pages - 1)));
 
     upsert_live_screen(chat_id, view);
 }
-
