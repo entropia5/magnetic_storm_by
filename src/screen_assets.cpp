@@ -1,0 +1,522 @@
+#include "screen_assets.h"
+
+#include "runtime_state.h"
+#include "template_engine.h"
+
+std::string screen_css() {
+    return template_engine::read_file_or_default(SCREEN_CSS_FILE, R"CSS(
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            width: 1280px;
+            height: 1500px;
+            overflow: hidden;
+            background: #0f1113;
+            color: #f6f7f4;
+            font-family: "DejaVu Sans", "Liberation Sans", Arial, Helvetica, sans-serif;
+            letter-spacing: 0;
+        }
+        .app {
+            width: 1280px;
+            height: 1500px;
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 82% 8%, rgba(201,25,36,0.22), transparent 28%),
+                radial-gradient(circle at 74% 76%, rgba(23,115,72,0.22), transparent 32%),
+                linear-gradient(145deg, #111416 0%, #1b1f21 54%, #111416 100%);
+        }
+        .flag-band { height: 42px; background: linear-gradient(90deg, #c91924 0 62%, #f6f7f4 62% 70%, #177348 70% 100%); }
+        .ornament {
+            position: absolute;
+            left: 0;
+            top: 42px;
+            bottom: 0;
+            width: 96px;
+            background:
+                repeating-linear-gradient(45deg, #c91924 0 16px, #f6f7f4 16px 32px, #177348 32px 48px, #f6f7f4 48px 64px),
+                #f6f7f4;
+            border-right: 8px solid #177348;
+            box-shadow: 12px 0 36px rgba(0,0,0,0.28);
+        }
+        .content {
+            width: 100%;
+            height: 100%;
+            padding: 46px 50px 46px 136px;
+            overflow: hidden;
+        }
+        .topline {
+            display: block;
+            text-align: right;
+            color: #cfd6d2;
+            font-size: 34px;
+            font-weight: 700;
+        }
+        .pill {
+            display: inline-block;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background: rgba(246,247,244,0.08);
+            border: 2px solid rgba(246,247,244,0.18);
+            color: #f6f7f4;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.24);
+        }
+        h1 {
+            margin: 30px 0 18px;
+            font-size: 86px;
+            line-height: 1.02;
+            letter-spacing: 0;
+            color: #f6f7f4;
+        }
+        .subtitle {
+            font-size: 44px;
+            line-height: 1.24;
+            color: #d8dfda;
+            max-width: 1060px;
+            margin-bottom: 30px;
+        }
+        .hero {
+            display: block;
+            font-size: 0;
+            margin: 30px 0;
+        }
+        .kp-card, .panel, .weather, .forecast-card {
+            background: rgba(32,36,38,0.92);
+            border: 2px solid rgba(246,247,244,0.14);
+            border-radius: 8px;
+            box-shadow: 0 18px 44px rgba(0,0,0,0.32);
+        }
+        .kp-card {
+            display: inline-block;
+            width: 320px;
+            padding: 30px;
+            color: #f6f7f4;
+            min-height: 286px;
+            vertical-align: top;
+            border-color: rgba(246,247,244,0.18);
+            box-shadow: 0 0 34px rgba(255,255,255,0.20), 0 18px 44px rgba(0,0,0,0.32);
+        }
+        .kp-label { font-size: 34px; opacity: 0.92; font-weight: 900; }
+        .kp-value { font-size: 130px; line-height: 0.92; font-weight: 900; margin-top: 22px; }
+        .kp-state { font-size: 36px; line-height: 1.08; font-weight: 900; margin-top: 18px; }
+        .panel {
+            display: inline-block;
+            width: 724px;
+            min-height: 286px;
+            margin-left: 20px;
+            vertical-align: top;
+            padding: 32px 34px;
+            font-size: 40px;
+            line-height: 1.33;
+            color: #f0f3ef;
+            border-left: 10px solid #177348;
+        }
+        .body {
+            background: #202426;
+            border-left: 10px solid #c91924;
+            padding: 32px 36px;
+            font-size: 42px;
+            line-height: 1.38;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.28);
+            margin: 26px 0;
+            color: #f0f3ef;
+        }
+        .screen-current .body {
+            min-height: 420px;
+            margin-top: 42px;
+            padding: 40px 44px;
+            border-left-color: #1fa463;
+            background: linear-gradient(180deg, rgba(32,36,38,0.96), rgba(25,31,30,0.96));
+            font-size: 41px;
+            line-height: 1.34;
+        }
+        .screen-current .body b {
+            color: #ffffff;
+        }
+        .footer {
+            margin-top: 34px;
+            padding-top: 24px;
+            border-top: 2px solid rgba(246,247,244,0.16);
+            color: #b7c0bb;
+            font-size: 32px;
+            font-weight: 800;
+        }
+        .weather {
+            padding: 28px;
+            margin: 24px 0;
+            border-top: 8px solid #c91924;
+            border-bottom: 8px solid #177348;
+            overflow: hidden;
+        }
+        .weather-now { display: block; font-size: 0; }
+        .weather-main {
+            display: inline-block;
+            width: 70%;
+            padding-right: 18px;
+            vertical-align: top;
+        }
+        .weather-tempbox {
+            display: inline-block;
+            width: 30%;
+            vertical-align: top;
+            text-align: right;
+        }
+        .weather-city {
+            max-height: 140px;
+            overflow: hidden;
+            overflow-wrap: break-word;
+            font-size: 68px;
+            line-height: 1.02;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+        .weather-desc {
+            max-height: 96px;
+            overflow: hidden;
+            overflow-wrap: break-word;
+            font-size: 42px;
+            line-height: 1.14;
+            color: #d7ded9;
+            font-weight: 800;
+        }
+        .weather-temp { font-size: 138px; line-height: 0.9; font-weight: 900; text-align: right; }
+        .weather-icon { font-size: 112px; text-align: right; margin-bottom: 8px; }
+        .metrics {
+            display: block;
+            margin-top: 22px;
+            font-size: 0;
+        }
+        .metric {
+            display: inline-block;
+            width: 32%;
+            margin-right: 2%;
+            padding: 20px;
+            vertical-align: top;
+            background: rgba(15,17,19,0.72);
+            border-radius: 8px;
+            border: 1px solid rgba(246,247,244,0.10);
+        }
+        .metric:nth-child(3n) { margin-right: 0; }
+        .metric small { display: block; color: #a9b2ad; font-size: 29px; font-weight: 900; margin-bottom: 10px; overflow-wrap: break-word; }
+        .metric b { display: block; font-size: 44px; overflow-wrap: break-word; }
+        .weather-strip-title {
+            margin-top: 26px;
+            margin-bottom: 14px;
+            font-size: 42px;
+            font-weight: 900;
+            color: #f6f7f4;
+        }
+        .weather-strip { display: block; font-size: 0; }
+        .weather-slot {
+            display: inline-block;
+            width: 23.8%;
+            min-height: 226px;
+            margin-right: 1.6%;
+            margin-bottom: 16px;
+            padding: 18px 16px;
+            vertical-align: top;
+            border-radius: 8px;
+            background: linear-gradient(180deg, rgba(246,247,244,0.10), rgba(246,247,244,0.04));
+            border: 1px solid rgba(246,247,244,0.13);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.24);
+        }
+        .weather-slot:nth-child(4n) { margin-right: 0; }
+        .weather-slot-time { font-size: 31px; font-weight: 900; color: #d8dfda; }
+        .weather-slot-icon { font-size: 58px; line-height: 1; margin: 10px 0 8px; }
+        .weather-slot-temp { font-size: 56px; font-weight: 900; line-height: 1; }
+        .weather-slot-desc { height: 56px; overflow: hidden; overflow-wrap: break-word; margin-top: 8px; font-size: 25px; line-height: 1.1; color: #d6ddd8; font-weight: 800; }
+        .weather-slot-meta { max-height: 62px; overflow: hidden; overflow-wrap: break-word; margin-top: 10px; font-size: 24px; line-height: 1.2; color: #f6f7f4; font-weight: 900; }
+        .screen-weather .content { padding-top: 42px; padding-bottom: 34px; }
+        .screen-weather h1 {
+            margin: 24px 0 18px;
+            font-size: 82px;
+        }
+        .screen-weather .weather {
+            margin: 18px 0 0;
+            padding: 24px;
+        }
+        .screen-weather .weather-city {
+            max-height: 124px;
+            font-size: 64px;
+        }
+        .screen-weather .weather-desc {
+            max-height: 84px;
+            font-size: 38px;
+        }
+        .screen-weather .weather-icon {
+            font-size: 84px;
+            margin-bottom: 4px;
+        }
+        .screen-weather .weather-temp { font-size: 122px; }
+        .screen-weather .metrics { margin-top: 18px; }
+        .screen-weather .metric { padding: 16px 18px; }
+        .screen-weather .metric small {
+            font-size: 29px;
+            margin-bottom: 8px;
+        }
+        .screen-weather .metric b { font-size: 42px; }
+        .screen-weather .weather-strip-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 38px;
+        }
+        .screen-weather .weather-slot {
+            height: 236px;
+            min-height: 0;
+            margin-bottom: 14px;
+            padding: 14px 16px;
+        }
+        .screen-weather .weather-slot-time { font-size: 29px; }
+        .screen-weather .weather-slot-icon {
+            font-size: 38px;
+            margin: 8px 0 6px;
+        }
+        .screen-weather .weather-slot-temp { font-size: 50px; }
+        .screen-weather .weather-slot-desc {
+            height: 48px;
+            margin-top: 6px;
+            font-size: 23px;
+        }
+        .screen-weather .weather-slot-meta {
+            max-height: 56px;
+            margin-top: 8px;
+            font-size: 22px;
+        }
+        .forecast-grid { display: block; margin: 24px 0; }
+        .forecast-card {
+            padding: 32px 34px;
+            border-top: 8px solid #c91924;
+            border-bottom: 8px solid #177348;
+        }
+        .forecast-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .forecast-date { font-size: 54px; font-weight: 900; }
+        .forecast-stats {
+            display: block;
+            margin: 22px 0 34px;
+            font-size: 0;
+        }
+        .forecast-stat {
+            display: inline-block;
+            width: 48.8%;
+            padding: 28px 30px;
+            min-height: 164px;
+            box-sizing: border-box;
+            vertical-align: top;
+            border-radius: 8px;
+            color: #f6f7f4;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.30);
+        }
+        .forecast-stat + .forecast-stat { margin-left: 2.4%; }
+        .forecast-stat small {
+            display: block;
+            font-size: 32px;
+            font-weight: 900;
+            opacity: 0.92;
+            margin-bottom: 12px;
+        }
+        .forecast-stat b {
+            display: block;
+            font-size: 74px;
+            line-height: 0.95;
+            font-weight: 900;
+        }
+        .morning-storm-summary .forecast-stats { margin-bottom: 0; }
+        .hour-grid {
+            display: block;
+            font-size: 0;
+            padding-top: 12px;
+            border-top: 2px solid rgba(246,247,244,0.13);
+        }
+        .hour-cell {
+            display: inline-block;
+            width: 23.6%;
+            margin-right: 1.8%;
+            margin-bottom: 14px;
+            padding: 24px 20px;
+            min-height: 158px;
+            box-sizing: border-box;
+            vertical-align: top;
+            border-radius: 8px;
+            color: #f6f7f4;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.24);
+            border: 1px solid rgba(246,247,244,0.12);
+        }
+        .hour-cell:nth-child(4n) { margin-right: 0; }
+        .hour-cell small {
+            display: block;
+            font-size: 34px;
+            font-weight: 900;
+            opacity: 0.9;
+            margin-bottom: 18px;
+        }
+        .hour-cell b {
+            display: block;
+            font-size: 78px;
+            line-height: 0.95;
+            font-weight: 900;
+        }
+        .screen-morning,
+        .screen-morning .app { width: 1800px; }
+        .screen-morning .ornament { display: none; }
+        .screen-morning .content { padding: 28px 24px 30px; }
+        .screen-morning .subtitle { max-width: none; }
+        .screen-morning h1 {
+            margin: 18px 0 6px;
+            font-size: 86px;
+        }
+        .screen-morning .subtitle {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        .screen-morning .hero { margin: 12px 0 16px; }
+        .screen-morning .kp-card {
+            width: 430px;
+            min-height: 252px;
+            padding: 24px;
+        }
+        .screen-morning .kp-label { font-size: 34px; }
+        .screen-morning .kp-value {
+            font-size: 128px;
+            margin-top: 14px;
+        }
+        .screen-morning .kp-state {
+            font-size: 34px;
+            margin-top: 12px;
+        }
+        .screen-morning .panel {
+            width: 1304px;
+            min-height: 252px;
+            margin-left: 18px;
+            padding: 26px 30px;
+            font-size: 52px;
+            line-height: 1.22;
+        }
+        .screen-morning .weather,
+        .screen-morning .forecast-grid,
+        .screen-morning .forecast-card { width: 100%; }
+        .screen-morning .weather {
+            margin: 16px 0 0;
+            padding: 20px 24px;
+        }
+        .screen-morning .weather-city {
+            max-height: 92px;
+            font-size: 62px;
+        }
+        .screen-morning .weather-desc {
+            max-height: 56px;
+            font-size: 36px;
+        }
+        .screen-morning .weather-icon {
+            font-size: 76px;
+            margin-bottom: 2px;
+        }
+        .screen-morning .weather-temp { font-size: 112px; }
+        .screen-morning .metrics { margin-top: 14px; }
+        .screen-morning .metric {
+            padding: 14px 18px;
+        }
+        .screen-morning .metric small {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        .screen-morning .metric b { font-size: 40px; }
+        .screen-morning .weather-strip-title {
+            margin-top: 16px;
+            margin-bottom: 10px;
+            font-size: 34px;
+        }
+        .screen-morning .weather-slot {
+            width: 23.95%;
+            height: 222px;
+            min-height: 0;
+            margin-right: 1.4%;
+            margin-bottom: 12px;
+            padding: 12px 14px;
+            overflow: hidden;
+        }
+        .screen-morning .weather-slot-time { font-size: 27px; }
+        .screen-morning .weather-slot-icon {
+            font-size: 34px;
+            margin: 6px 0 4px;
+        }
+        .screen-morning .weather-slot-temp { font-size: 44px; }
+        .screen-morning .weather-slot-desc {
+            height: 42px;
+            margin-top: 4px;
+            font-size: 21px;
+        }
+        .screen-morning .weather-slot-meta {
+            max-height: 28px;
+            margin-top: 6px;
+            font-size: 21px;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+        .screen-morning .forecast-card {
+            padding: 22px 24px;
+        }
+        .screen-morning .forecast-date { font-size: 46px; }
+        .screen-morning .forecast-stats {
+            margin: 14px 0 0;
+        }
+        .screen-morning .forecast-stat {
+            width: 32%;
+            min-height: 132px;
+            padding: 18px 22px;
+        }
+        .screen-morning .forecast-stat + .forecast-stat { margin-left: 2%; }
+        .screen-morning .forecast-stat small { font-size: 27px; }
+        .screen-morning .forecast-stat b { font-size: 68px; }
+        .screen-morning .forecast-stat em {
+            display: block;
+            margin-top: 6px;
+            font-size: 28px;
+            font-style: normal;
+            font-weight: 900;
+        }
+        .screen-morning .footer {
+            margin-top: 22px;
+            padding-top: 18px;
+            font-size: 32px;
+        }
+        .alert-mode .app {
+            background:
+                radial-gradient(circle at 82% 8%, rgba(201,25,36,0.42), transparent 30%),
+                radial-gradient(circle at 74% 76%, rgba(201,25,36,0.18), transparent 34%),
+                linear-gradient(180deg, #211719 0%, #151719 100%);
+        }
+        .alert-mode .flag-band { background: linear-gradient(90deg, #c91924 0 82%, #f6f7f4 82% 90%, #9e111b 90% 100%); }
+        .alert-mode .ornament { border-right-color: #c91924; box-shadow: 12px 0 44px rgba(201,25,36,0.32); }
+        .alert-mode h1 { color: #ffdde0; }
+        .alert-mode .pill { border-color: rgba(255,221,224,0.34); background: rgba(201,25,36,0.16); }
+        .alert-mode .panel { border-left-color: #c91924; background: #251d1f; }
+        .alert-mode .kp-card { border-color: rgba(255,221,224,0.32); }
+        .alert-mode .body { border-left-color: #c91924; background: #251d1f; }
+    )CSS");
+}
+
+std::string screen_template() {
+    return template_engine::read_file_or_default(SCREEN_TEMPLATE_FILE, R"HTML(<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>{{CSS}}</style>
+</head>
+<body class="{{BODY_CLASS}}">
+    <div class="app">
+        <div class="flag-band"></div>
+        <div class="ornament"></div>
+        <main class="content">{{CONTENT}}</main>
+    </div>
+</body>
+</html>
+)HTML");
+}
+

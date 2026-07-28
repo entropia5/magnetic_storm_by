@@ -1,65 +1,120 @@
-# Geomagnetic & Weather Telegram Bot for Belarus
+# Geomagnetic & Weather Bot
 
-C++17 Telegram bot that shows current geomagnetic activity, NOAA Kp forecasts,
-weather for Belarusian locations, and scheduled storm notifications.
+[![CI](https://github.com/entropia5/magnetic_storm_by/actions/workflows/ci.yml/badge.svg)](https://github.com/entropia5/magnetic_storm_by/actions/workflows/ci.yml)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)](https://en.cppreference.com/w/cpp/17)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Telegram UI Preview
+A self-hosted C++17 Telegram bot for geomagnetic activity and local weather in
+Belarus. It combines NOAA space-weather data with OpenWeatherMap forecasts,
+renders a live visual dashboard, and sends scheduled storm notifications and
+morning reports.
 
-Real rendered bot screens prepared for README. Runtime chat ids, message ids,
-tokens, and local state are not included.
+**Try the public bot:** [@geomagnetic_belarus_bot](https://t.me/geomagnetic_belarus_bot)
+
+## Preview
 
 <p align="center">
-  <img src="assets/screenshots/weather-current.jpg" alt="Rendered current weather screen from the bot" width="360">
-  <img src="assets/screenshots/geomagnetic-current.jpg" alt="Rendered current geomagnetic Kp screen from the bot" width="360">
+  <img src="assets/screenshots/weather-current.jpg" alt="Current weather screen" width="360">
+  <img src="assets/screenshots/geomagnetic-current.jpg" alt="Current geomagnetic activity screen" width="360">
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/geomagnetic-forecast.jpg" alt="Rendered 3-day geomagnetic forecast screen from the bot" width="360">
-  <img src="assets/screenshots/storm-alert.jpg" alt="Rendered magnetic storm alert screen from the bot" width="360">
+  <img src="assets/screenshots/geomagnetic-forecast.jpg" alt="Three-day geomagnetic forecast" width="360">
+  <img src="assets/screenshots/storm-alert.jpg" alt="Geomagnetic storm alert" width="360">
 </p>
 
-## Features
+## Highlights
 
-- Real-time geomagnetic status from NOAA SWPC.
-- 3-day geomagnetic forecast with Kp-based risk labels.
-- Weather for Belarusian cities and villages through OpenWeatherMap.
-- Russian, Belarusian, and English interface text.
-- Morning reports and storm alerts for subscribed users.
-- HTML/CSS screen templates rendered to Telegram images with `wkhtmltoimage`.
-- Text fallback when image rendering is unavailable.
-- Local flat-file persistence for small self-hosted deployments.
+- Current planetary Kp index from NOAA SWPC.
+- Three-day geomagnetic forecast with Kp and G1–G5 storm levels.
+- Current weather and short-term forecast for Belarusian locations.
+- Russian, Belarusian, and English interfaces.
+- Per-user city, language, and notification settings.
+- Morning reports and configurable geomagnetic storm alerts.
+- Live Telegram dashboard updated through message editing.
+- HTML/CSS screens rendered to JPEG with a text-only fallback.
+- Atomic local persistence for lightweight self-hosted deployments.
+- Modular C++ architecture with automated build and test workflow.
 
-## Tech Stack
+## Architecture
 
-| Component | Technology |
+The project separates external services, application scenarios, presentation,
+rendering, persistence, and runtime orchestration.
+
+```mermaid
+flowchart LR
+    Telegram[Telegram Bot API] <--> Runtime[Application runtime]
+    Runtime --> Callbacks[Command and callback routing]
+    Callbacks --> Screens[Bot screen scenarios]
+    Scheduler[Background scheduler] --> Screens
+
+    Screens --> Weather[OpenWeatherMap client]
+    Screens --> SpaceWeather[NOAA SWPC client]
+    Screens --> Storage[Local state storage]
+    Screens --> View[ScreenView presentation]
+
+    View --> HTML[HTML/CSS renderer]
+    HTML --> Image[wkhtmltoimage]
+    Image --> Telegram
+```
+
+Important modules:
+
+| Module | Responsibility |
+| --- | --- |
+| `app_runtime` | Startup, configuration, Telegram long polling |
+| `bot_screens` | User-facing application scenarios |
+| `callback_handler` | Inline keyboard routing |
+| `scheduler` | Morning reports and storm checks |
+| `weather_*` | Weather requests, parsing, and normalization |
+| `geomagnetic_client` | NOAA Kp index and forecast retrieval |
+| `telegram_*` | Telegram transport, live screens, and fallbacks |
+| `screen_*` | HTML composition and JPEG rendering |
+| `storage` | Users, preferences, and message state |
+| `localization` / `translations` | Language selection and text catalog |
+| `presentation` | Kp, weather, and report formatting |
+
+## Technology
+
+| Area | Technology |
 | --- | --- |
 | Language | C++17 |
-| HTTP | CPR over libcurl |
+| HTTP | CPR / libcurl |
 | JSON | nlohmann/json |
-| Rendering | HTML/CSS + wkhtmltoimage |
-| Scheduling | C++ threads |
-| Build | Make |
-| Weather API | OpenWeatherMap |
-| Geomagnetic API | NOAA SWPC |
+| Rendering | HTML, CSS, wkhtmltoimage |
+| Concurrency | Standard C++ threads and mutexes |
+| Build | GNU Make |
+| CI | GitHub Actions |
+| Weather | OpenWeatherMap |
+| Space weather | NOAA Space Weather Prediction Center |
 
-## Repository Layout
+## Repository Structure
 
 ```text
 .
-├── geomagnetic_bot_by.cpp        # Bot logic, Telegram handlers, API clients
-├── src/template_engine.*         # Small template replacement helper
-├── templates/screen.html         # Telegram image HTML shell
-├── templates/screen.css          # Telegram image visual style
-├── deploy/geobot.service.example # systemd unit example
-├── assets/screenshots/           # README screenshots
-├── .github/workflows/ci.yml      # GitHub Actions build/test workflow
-├── .env.example                  # Environment variable placeholders only
+├── src/
+│   ├── main.cpp                 # Minimal entry point
+│   ├── app_runtime.*            # Startup and polling loop
+│   ├── bot_screens.*            # Application scenarios
+│   ├── weather_*.*              # Weather integration
+│   ├── geomagnetic_client.*     # NOAA integration
+│   ├── telegram_*.*             # Telegram transport
+│   ├── screen_*.*               # Rendering pipeline
+│   ├── storage.*                # Persistence
+│   └── localization.*           # Localization logic
+├── tests/test_main.cpp          # Unit and renderer checks
+├── templates/                   # Runtime HTML/CSS templates
+├── assets/screenshots/          # Public UI examples
+├── deploy/geobot.service.example
+├── .github/workflows/ci.yml
 └── Makefile
 ```
 
-## Dependencies
+## Building
 
-On Debian/Ubuntu:
+### Dependencies
+
+On Debian or Ubuntu:
 
 ```bash
 sudo apt-get update
@@ -73,140 +128,120 @@ sudo apt-get install -y \
   wkhtmltopdf
 ```
 
-`wkhtmltoimage` is provided by the `wkhtmltopdf` package on Debian/Ubuntu. The
-bot uses it to render Telegram live screens as JPEG images. If it is missing,
-the bot sends text fallback messages instead of failing the whole flow.
+`wkhtmltoimage` is distributed in the `wkhtmltopdf` package. It is optional at
+runtime: if it is unavailable, the bot sends text messages instead of rendered
+screens.
 
-If your distribution does not provide `libcpr-dev`, install CPR from your
-package manager, vcpkg, or the upstream CPR project, then keep the linker flags
-from the `Makefile`.
+If `libcpr-dev` is unavailable in your distribution, install CPR through its
+upstream build, vcpkg, or another package manager.
 
-## Build and Test
+### Compile and test
 
 ```bash
 make
 make test
 ```
 
-The test target builds the bot with `-DUNIT_TEST` and runs local checks for
-normalization, localization helpers, escaping, Kp labels, and renderer support.
+The test target builds a separate test executable. Current checks cover
+localization, command parsing, location normalization, Kp classification,
+precipitation formatting, Telegram error handling, HTML escaping, templates,
+and rendered screen dimensions.
 
 ## Configuration
 
-Create a private `.env` from the public example:
+Create a local configuration file:
 
 ```bash
 cp .env.example .env
 ```
 
-Then set real values locally:
+Set the required credentials:
 
-```bash
-TG_BOT_TOKEN=replace_with_your_telegram_token
-OPENWEATHER_API_KEY=replace_with_your_openweathermap_key
+```dotenv
+TG_BOT_TOKEN=your_telegram_bot_token
+OPENWEATHER_API_KEY=your_openweathermap_key
+```
+
+Optional development setting:
+
+```dotenv
 GEOBOT_DEV_CHAT_ID=
 ```
 
-Required variables:
+| Variable | Required | Description |
+| --- | --- | --- |
+| `TG_BOT_TOKEN` | Yes | Token created with Telegram BotFather |
+| `OPENWEATHER_API_KEY` | For weather | OpenWeatherMap API key |
+| `GEOBOT_DEV_CHAT_ID` | No | Enables development-only preview commands for one chat |
 
-| Variable | Purpose |
-| --- | --- |
-| `TG_BOT_TOKEN` | Telegram Bot API token |
-| `OPENWEATHER_API_KEY` | OpenWeatherMap API key for weather screens |
+Environment variables take precedence over `.env` values.
 
-Optional variables:
-
-| Variable | Purpose |
-| --- | --- |
-| `GEOBOT_DEV_CHAT_ID` | Enables local-only testing commands for one chat |
-
-Run locally:
+Run the bot:
 
 ```bash
 ./bot
 ```
 
-## systemd Deployment
+## Screen Customization
 
-Use the provided unit as a starting point:
+The live dashboard is driven by:
+
+- `templates/screen.html` — document shell;
+- `templates/screen.css` — layout, colors, typography, and responsive variants.
+
+The templates are loaded at runtime. Visual changes therefore do not require
+recompiling the C++ application.
+
+## Deployment
+
+A systemd service example is available in
+`deploy/geobot.service.example`.
 
 ```bash
 sudo cp deploy/geobot.service.example /etc/systemd/system/geobot.service
-```
-
-Create a private environment file outside the repository:
-
-```bash
 sudo mkdir -p /etc/magnetic_storm_by
 sudo nano /etc/magnetic_storm_by/geobot.env
 ```
 
-Example content:
-
-```ini
-TG_BOT_TOKEN=replace_with_your_telegram_token
-OPENWEATHER_API_KEY=replace_with_your_openweathermap_key
-GEOBOT_DEV_CHAT_ID=
-```
-
-Adjust `User`, `Group`, `WorkingDirectory`, and `ExecStart` in the service file
-for your server path. Then enable the service:
+Adjust `User`, `Group`, `WorkingDirectory`, and `ExecStart` in the copied unit,
+then start the service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable geobot.service
-sudo systemctl start geobot.service
-```
-
-Check logs:
-
-```bash
+sudo systemctl enable --now geobot.service
 journalctl -u geobot.service -f
 ```
 
-## Runtime Data and Privacy
+## Privacy and Runtime Data
 
-The bot creates local state files in the working directory:
+The bot stores small amounts of local runtime state:
 
-- `users.txt`
-- `cities.txt`
-- `notifications.txt`
-- `language.txt`
-- `live_messages.txt`
-- `supplement_messages.txt`
-- `bot_state.json`
-- `bot_screens/`
-
-These files can contain Telegram chat ids, message ids, selected cities, and
-rendered private screens. They are intentionally ignored by git and must not be
-committed or attached to public issues.
-
-Before publishing changes, verify the public surface:
-
-```bash
-git status --short --ignored
-git ls-files
-git grep -n -E "(TG_BOT_TOKEN|OPENWEATHER_API_KEY|BOT_TOKEN|api[_-]?key|token|secret|password)"
+```text
+users.txt
+cities.txt
+notifications.txt
+language.txt
+live_messages.txt
+supplement_messages.txt
+bot_state.json
+bot_screens/
 ```
 
-The grep command should only find placeholder names or source code references
-to environment variable names, not real values.
+These files may contain Telegram chat IDs, message IDs, selected cities, or
+rendered private screens. They are excluded through `.gitignore` and must not
+be published.
 
-## Screen Templates
+Credentials are read from environment variables or ignored local `.env` files.
+Never commit real bot tokens or API keys.
 
-Telegram images are rendered from editable templates:
+## Limitations
 
-- `templates/screen.html` - outer HTML shell.
-- `templates/screen.css` - visual style, layout, colors, typography.
-
-The bot reads these files whenever it renders a new screen. CSS/HTML changes do
-not require recompiling C++; trigger a new screen render in Telegram or restart
-the service if you want a clean runtime state.
-
-## Public Bot
-
-Telegram: `@geomagnetic_belarus_bot`
+- Persistence is designed for a small self-hosted bot, not a distributed
+  multi-instance deployment.
+- Scheduling currently uses the Belarus time zone expected by this service.
+- Weather features depend on OpenWeatherMap availability and API limits.
+- Generated health guidance is informational and is not medical advice.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Distributed under the [MIT License](LICENSE).
