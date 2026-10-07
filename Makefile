@@ -13,18 +13,31 @@ HEADERS := src/app_runtime.h src/bot_screens.h src/callback_handler.h src/config
 
 all: $(TARGET)
 
-$(TARGET): $(APP_SOURCE) $(CORE_SOURCES) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(APP_SOURCE) $(CORE_SOURCES) -o $@.tmp $(LDLIBS)
+BUILD_DIR := build
+CORE_OBJECTS := $(CORE_SOURCES:%.cpp=$(BUILD_DIR)/%.o)
+APP_OBJECT := $(BUILD_DIR)/$(APP_SOURCE:.cpp=.o)
+TEST_OBJECT := $(BUILD_DIR)/$(TEST_SOURCE:.cpp=.o)
+
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(TARGET): $(APP_OBJECT) $(CORE_OBJECTS)
+	$(CXX) $^ -o $@.tmp $(LDLIBS)
 	mv $@.tmp $@
 
 test-build: $(TEST_TARGET)
 
-$(TEST_TARGET): $(TEST_SOURCE) $(CORE_SOURCES) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(TEST_SOURCE) $(CORE_SOURCES) -o $@.tmp $(LDLIBS)
+$(TEST_TARGET): $(TEST_OBJECT) $(CORE_OBJECTS)
+	$(CXX) $^ -o $@.tmp $(LDLIBS)
 	mv $@.tmp $@
+
+-include $(CORE_OBJECTS:.o=.d) $(APP_OBJECT:.o=.d) $(TEST_OBJECT:.o=.d)
 
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
+	python3 tests/transport_regression.py
 
 clean:
 	rm -f $(TARGET) $(TEST_TARGET) $(TARGET).tmp $(TEST_TARGET).tmp
+	rm -rf $(BUILD_DIR)

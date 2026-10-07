@@ -11,4 +11,4 @@ void show_weather_result_screen(long long chat_id, const std::string& location, 
 void show_notifications_screen(long long chat_id, bool enabled);
 void show_language_screen(long long chat_id);
 void show_alert_screen(long long chat_id, double current_kp, bool force_new_message = false);
-void send_morning_report(long long chat_id, int page = 0);
+void send_morning_report(long long chat_id, int page = 0, bool force_new_message = false);

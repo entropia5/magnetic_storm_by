@@ -19,6 +19,15 @@ string format_precipitation(const WeatherForecastSlot& slot, long long chat_id);
 string format_precipitation_compact(const WeatherForecastSlot& slot, long long chat_id);
 string current_minsk_datetime(long long chat_id);
 
+string temperature_color(double temperature) {
+    if (temperature < -10) return "#a5b9ff";
+    if (temperature < 0) return "#83c5ff";
+    if (temperature < 10) return "#84dedc";
+    if (temperature < 20) return "#bce1a2";
+    if (temperature < 28) return "#f3cf70";
+    return "#ffad77";
+}
+
 string weather_place_label(const WeatherInfo& weather, long long chat_id) {
     if (weather.name == "Минск" || weather.name == "Мінск" || weather.name == "Minsk") {
         return localize(chat_id, "город-герой Минск", "горад-герой Мінск", "Hero City Minsk");
@@ -86,17 +95,17 @@ string render_daily_storm_summary_html(long long chat_id, const vector<KpForecas
                     "Geomagnetic storms today"))
              << "</div></div>";
         html << "<div class='forecast-stats'>";
-        html << "<div class='forecast-stat' style='--kp-color:" << kp_color(min_kp) << "'>";
+        html << "<div class='forecast-stat' style='color:" << kp_color(min_kp) << "'>";
         html << "<small>" << html_escape(localize(chat_id, "Минимум за день", "Мінімум за дзень", "Daily minimum")) << "</small>";
         html << "<b>" << format_double_1(min_kp) << "</b>";
-        html << "<em>" << html_escape(kp_slot_time(min_index)) << "</em></div>";
-        html << "<div class='forecast-stat' style='--kp-color:" << kp_color(max_kp) << "'>";
+        html << "<em>" << html_escape(kp_slot_time(min_index) + " UTC") << "</em></div>";
+        html << "<div class='forecast-stat' style='color:" << kp_color(max_kp) << "'>";
         html << "<small>" << html_escape(localize(chat_id, "Максимум за день", "Максімум за дзень", "Daily maximum")) << "</small>";
         html << "<b>" << format_double_1(max_kp) << "</b>";
-        html << "<em>" << html_escape(kp_slot_time(max_index)) << "</em></div>";
-        html << "<div class='forecast-stat forecast-peak' style='--kp-color:" << kp_color(max_kp) << "'>";
+        html << "<em>" << html_escape(kp_slot_time(max_index) + " UTC") << "</em></div>";
+        html << "<div class='forecast-stat forecast-peak' style='color:" << kp_color(max_kp) << "'>";
         html << "<small>" << html_escape(localize(chat_id, "Пик дня", "Пік дня", "Daily peak")) << "</small>";
-        html << "<b>" << html_escape(kp_slot_time(max_index)) << "</b>";
+        html << "<b>" << html_escape(kp_slot_time(max_index) + " UTC") << "</b>";
         html << "<em>Kp " << format_double_1(max_kp) << "</em></div>";
         html << "</div></div>";
     }
@@ -116,9 +125,9 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
     }
 
     if (view.kp >= 0.0) {
-        string color = view.alert ? "#9e111b" : kp_color(view.kp);
+        string color = kp_color(view.kp);
         html << "<section class='hero'>";
-        html << "<div class='kp-card' style='--kp-color:" << color << "'>";
+        html << "<div class='kp-card' style='color:" << color << "'>";
         html << "<div class='kp-label'>" << html_escape(localize(chat_id, "Индекс Kp", "Індэкс Kp", "Kp index")) << "</div>";
         html << "<div class='kp-value'>" << format_double_1(view.kp) << "</div>";
         html << "<div class='kp-state'>" << html_escape(kp_short_label(view.kp, chat_id)) << "</div>";
@@ -138,10 +147,10 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
              << html_escape(weather_place_label(view.weather, chat_id)) << "</div>";
         html << "<div class='weather-desc'>" << html_escape(view.weather.description) << "</div></div>";
         html << "<div class='weather-tempbox'><div class='weather-icon'>" << html_escape(view.weather.icon) << "</div>";
-        html << "<div class='weather-temp'>" << view.weather.temp << "°</div></div>";
+        html << "<div class='weather-temp' style='color:" << temperature_color(view.weather.temp) << "'>" << view.weather.temp << "°</div></div>";
         html << "</div>";
         html << "<div class='metrics'>";
-        html << "<div class='metric'><small>" << html_escape(localize(chat_id, "Ощущается", "Адчуваецца", "Feels")) << "</small><b>" << view.weather.feels_like << "°C</b></div>";
+        html << "<div class='metric'><small>" << html_escape(localize(chat_id, "Ощущается", "Адчуваецца", "Feels")) << "</small><b style='color:" << temperature_color(view.weather.feels_like) << "'>" << view.weather.feels_like << "°C</b></div>";
         html << "<div class='metric'><small>" << html_escape(localize(chat_id, "Влажн.", "Вільг.", "Humidity")) << "</small><b>" << view.weather.humidity << "%</b></div>";
         html << "<div class='metric'><small>" << html_escape(localize(chat_id, "Ветер", "Вецер", "Wind")) << "</small><b>" << (int)view.weather.wind_speed << " " << html_escape(wind_unit(chat_id)) << "</b></div>";
         html << "</div>";
@@ -152,7 +161,7 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
                 html << "<div class='weather-slot'>";
                 html << "<div class='weather-slot-time'>" << html_escape(slot.time) << "</div>";
                 html << "<div class='weather-slot-icon'>" << html_escape(slot.icon) << "</div>";
-                html << "<div class='weather-slot-temp'>" << slot.temp << "°</div>";
+                html << "<div class='weather-slot-temp' style='color:" << temperature_color(slot.temp) << "'>" << slot.temp << "°</div>";
                 html << "<div class='weather-slot-desc'>" << html_escape(slot.description) << "</div>";
                 if (view.kind == "morning") {
                     html << "<div class='weather-slot-meta weather-slot-meta-compact'>"
@@ -183,24 +192,24 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
             html << "<div class='forecast-card'>";
             html << "<div class='forecast-head'><div class='forecast-date'>" << html_escape(fc.date) << "</div></div>";
             html << "<div class='forecast-stats'>";
-            html << "<div class='forecast-stat' style='--kp-color:" << kp_color(min_kp) << "'>";
+            html << "<div class='forecast-stat' style='color:" << kp_color(min_kp) << "'>";
             html << "<small>" << html_escape(localize(chat_id, "Минимум за день", "Мінімум за дзень", "Daily minimum")) << "</small>";
             html << "<b>" << format_double_1(min_kp) << "</b></div>";
-            html << "<div class='forecast-stat' style='--kp-color:" << kp_color(fc.max_kp) << "'>";
+            html << "<div class='forecast-stat' style='color:" << kp_color(fc.max_kp) << "'>";
             html << "<small>" << html_escape(localize(chat_id, "Максимум за день", "Максімум за дзень", "Daily maximum")) << "</small>";
             html << "<b>" << format_double_1(fc.max_kp) << "</b></div>";
             html << "</div>";
             html << "<div class='hour-section'>";
             html << "<div class='hour-grid-title'>"
                  << html_escape(localize(chat_id,
-                        "Почасовой прогноз",
-                        "Пагадзінны прагноз",
-                        "Hourly forecast"))
+                        "Прогноз по 3 часа · UTC",
+                        "Прагноз па 3 гадзіны · UTC",
+                        "3-hour forecast · UTC"))
                  << "</div>";
             html << "<div class='hour-grid'>";
             for (size_t i = 0; i < fc.values.size() && i < 8; i++) {
                 double value = fc.values[i];
-                html << "<div class='hour-cell' style='--kp-color:" << kp_color(value) << "'>";
+                html << "<div class='hour-cell' style='color:" << kp_color(value) << "'>";
                 html << "<small>" << setw(2) << setfill('0') << (int)(i * 3) << ":00</small>";
                 html << "<b>" << format_double_1(value) << "</b></div>";
             }
@@ -212,9 +221,20 @@ string render_screen_html(long long chat_id, const ScreenView& view) {
     if (!view.body.empty()) {
         html << "<section class='body'>" << markdown_to_html(view.body) << "</section>";
     }
-    if (!view.footer.empty()) {
-        html << "<footer class='footer'>" << markdown_to_html(view.footer) << "</footer>";
+    if (view.body.empty() && view.kp < 0 && !view.show_weather && view.forecast.empty() && view.daily_storm_summary.empty() && !view.supplement.empty()) {
+        html << "<section class='body'>" << markdown_to_html(view.supplement) << "</section>";
     }
+    string footer = view.footer;
+    if (footer.empty()) {
+        if (view.show_weather && view.weather.ok) {
+            footer = localize(chat_id, "OpenWeather · время прогноза: Минск, UTC+3", "OpenWeather · час прагнозу: Мінск, UTC+3", "OpenWeather · forecast time: Minsk, UTC+3");
+        } else if (view.kp >= 0 || !view.forecast.empty()) {
+            footer = localize(chat_id, "NOAA SWPC · Kp: 0–9 · бури: от Kp 5", "NOAA SWPC · Kp: 0–9 · буры: ад Kp 5", "NOAA SWPC · Kp: 0–9 · storms: Kp 5 and above");
+        } else {
+            footer = localize(chat_id, "Беларусь · погода и геомагнитная обстановка", "Беларусь · надвор’е і геамагнітная абстаноўка", "Belarus · weather and geomagnetic activity");
+        }
+    }
+    html << "<footer class='footer'>" << markdown_to_html(footer) << "</footer>";
 
     return template_engine::render(screen_template(), {
         {"BODY_CLASS", screen_body_class(view)},

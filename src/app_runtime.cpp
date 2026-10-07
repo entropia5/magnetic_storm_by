@@ -69,7 +69,7 @@ int run_bot() {
 
     while (true) {
         auto r = cpr::Get(cpr::Url{API_URL + "/getUpdates"},
-                          cpr::Parameters{{"offset", to_string(last_id + 1)}, {"timeout", "25"}},
+                          cpr::Parameters{{"offset", to_string(last_id + 1)}, {"timeout", "25"}, {"allowed_updates", "[\"message\",\"callback_query\"]"}},
                           cpr::Timeout{30000});
 
         if (r.status_code == 200) {

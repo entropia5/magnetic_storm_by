@@ -121,12 +121,12 @@ string kp_unavailable_text(long long chat_id) {
 }
 
 string kp_color(double kp) {
-    if (kp < 4.0) return "#1fa463";
-    if (kp < 5.0) return "#d7a316";
-    if (kp < 6.0) return "#e86f1c";
-    if (kp < 7.0) return "#d92d20";
-    if (kp < 8.0) return "#7b3fe4";
-    return "#232326";
+    if (kp < 4.0) return "#65d6a0";
+    if (kp < 5.0) return "#f3cf70";
+    if (kp < 6.0) return "#ffad66";
+    if (kp < 7.0) return "#ff7e83";
+    if (kp < 8.0) return "#c5a0ff";
+    return "#f4a1cf";
 }
 
 string storm_level_label(double kp) {
@@ -205,7 +205,7 @@ string format_precipitation_compact(const WeatherForecastSlot& slot, long long c
 
 string kp_slot_hour(size_t index) {
     stringstream hour;
-    hour << setw(2) << setfill('0') << (int)(index * 3) << ":00";
+    hour << setw(2) << setfill('0') << (int)(index * 3) << ":00 UTC";
     return hour.str();
 }
 
@@ -349,7 +349,7 @@ string forecast_bursts_summary(const KpForecast& fc, long long chat_id) {
             peak_index = i;
         }
         stringstream hour;
-        hour << setw(2) << setfill('0') << (int)(i * 3) << ":00";
+        hour << setw(2) << setfill('0') << (int)(i * 3) << ":00 UTC";
         string item = hour.str() + " - Kp " + format_double_1(value);
         if (value >= 5.0) {
             string level = storm_level_label(value);
@@ -361,7 +361,7 @@ string forecast_bursts_summary(const KpForecast& fc, long long chat_id) {
     }
 
     stringstream peak_hour;
-    peak_hour << setw(2) << setfill('0') << (int)(peak_index * 3) << ":00";
+    peak_hour << setw(2) << setfill('0') << (int)(peak_index * 3) << ":00 UTC";
 
     if (!storm_hours.empty()) {
         string summary = localize(chat_id,

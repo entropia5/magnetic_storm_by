@@ -268,3 +268,22 @@ Never commit real bot tokens or API keys.
 ## License
 
 Distributed under the [MIT License](LICENSE).
+
+### Card rendering and delivery
+
+Cards use a graphite background with Belarus red and green accents. Kp values use
+an activity scale (green, gold, orange, coral, violet, pink); temperature values
+use blue for frost and gold/orange for warmth. The CSS works with Qt WebKit and
+does not rely on CSS variables. Card height follows content so weather descriptions
+and long location names remain visible. Forecasts show NOAA source dates and UTC
+intervals; weather forecast timestamps include the date and Minsk time (UTC+3).
+
+`/start` opens a useful dashboard. Scheduled morning reports at 09:00 Minsk time
+and storm alerts create fresh notifications; navigation updates the existing card.
+The scheduler checks storms once per 20-minute interval and sends a single storm-end
+notification. A replacement must be delivered before the previous card is removed.
+When rendering fails, a text screen with the same navigation is used.
+
+Run `make -j2 all test-build` followed by `make test`. To keep visual previews,
+run `GEOBOT_KEEP_TEST_IMAGES=1 ./bot_tests`; named JPEG and HTML previews are saved
+under `bot_screens/`. Run `python3 tests/card_layout_check.py` after generating previews to check text bounds with Qt WebKit. `make test` also checks five delivery and failure scenarios against a local Telegram stub in an isolated temporary directory. Rendering checks do not establish delivery to a Telegram chat.

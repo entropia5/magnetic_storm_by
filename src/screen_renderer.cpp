@@ -27,7 +27,7 @@ std::string render_screen_image(long long chat_id, const ScreenView& view) {
     output.close();
 
     const int width = view.kind == "morning" ? 1800 : 1280;
-    const std::string command = "/usr/bin/wkhtmltoimage --quiet --width "
+    const std::string command = "/usr/bin/timeout 25s /usr/bin/wkhtmltoimage --quiet --width "
         + std::to_string(width) + " --quality 92 " + shell_quote(html_path)
         + " " + shell_quote(image_path);
     const int result = std::system(command.c_str());

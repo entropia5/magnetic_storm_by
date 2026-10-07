@@ -1,4 +1,5 @@
 #include "bot_screens.h"
+#include "conversation_state.h"
 
 #include "geomagnetic_client.h"
 #include "localization.h"
@@ -33,6 +34,8 @@ void show_home_screen(long long chat_id, const string& user_name, bool force_new
         "Здравствуйте, " + clean_name,
         "Вітаю, " + clean_name,
         "Hello, " + clean_name);
+    view.subtitle = localize(chat_id, "Погода и геомагнитная обстановка Беларуси", "Надвор’е і геамагнітная абстаноўка Беларусі", "Weather and geomagnetic activity in Belarus");
+    view.body = localize(chat_id, "Выберите раздел кнопками под карточкой.\n\nТекущий индекс Kp · прогноз на 3 дня · погода\n\nСохраните свой населённый пункт для утренней сводки.", "Выберыце раздзел кнопкамі пад карткай.\n\nБягучы індэкс Kp · прагноз на 3 дні · надвор’е\n\nЗахавайце свой населены пункт для ранішняй зводкі.", "Choose a section using the buttons below.\n\nCurrent Kp index · 3-day forecast · weather\n\nSave your location for the morning report.");
     upsert_live_screen(chat_id, view, force_new_message);
 }
 
@@ -130,6 +133,8 @@ void show_weather_result_screen(long long chat_id, const string& location, bool 
         view.weather_slots = fetch_weather_forecast_slots(normalized, chat_id, 8);
         view.supplement = weather_supplement_text(chat_id, weather, view.weather_slots, save_city);
     } else {
+        if (save_city) set_waiting_for_city(chat_id, true);
+        else set_waiting_for_weather(chat_id, true);
         view.subtitle = get_text(chat_id, "city_not_found");
         view.supplement = localize(chat_id,
             "Проверьте название и попробуйте ещё раз.",
@@ -200,7 +205,7 @@ void show_alert_screen(long long chat_id, double current_kp, bool force_new_mess
     upsert_live_screen(chat_id, view, force_new_message);
 }
 
-void send_morning_report(long long chat_id, int page) {
+void send_morning_report(long long chat_id, int page, bool force_new_message) {
     tm ltm = get_minsk_time();
 
     string user_city_name = user_city_or_default(chat_id);
@@ -264,5 +269,5 @@ void send_morning_report(long long chat_id, int page) {
             "Прагноз магнітных бур · дзень " + to_string(page) + " з " + to_string(max(1, total_pages - 1)),
             "Geomagnetic storm forecast · day " + to_string(page) + " of " + to_string(max(1, total_pages - 1)));
 
-    upsert_live_screen(chat_id, view);
+    upsert_live_screen(chat_id, view, force_new_message);
 }

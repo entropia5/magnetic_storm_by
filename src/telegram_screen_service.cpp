@@ -30,7 +30,9 @@ string photo_caption_for_screen(const ScreenView& view) {
 
     const size_t max_caption_size = 950;
     if (text.size() > max_caption_size) {
-        text = text.substr(0, max_caption_size) + "\n...";
+        size_t end = max_caption_size;
+        while (end > 0 && (static_cast<unsigned char>(text[end]) & 0xC0) == 0x80) --end;
+        text = text.substr(0, end) + "\n...";
     }
     return markdown_to_telegram_html(text);
 }
@@ -157,6 +159,8 @@ bool send_plain_fallback_text(long long chat_id, const string& text, const json&
 }
 
 void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_new_message) {
+    static mutex screen_delivery_mutex;
+    lock_guard<mutex> delivery_lock(screen_delivery_mutex);
     string image_path = render_screen_image(chat_id, view);
     string fallback_text = fallback_text_for_screen(chat_id, view);
     string caption = photo_caption_for_screen(view);
@@ -168,18 +172,6 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
             known_message_id = live_message_id[chat_id];
         }
     }
-    if (force_new_message) {
-        cout << "➡️ force new live screen chat_id=" << chat_id << endl;
-        delete_supplement_message(chat_id);
-        if (known_message_id > 0) {
-            delete_telegram_message(chat_id, known_message_id);
-            save_live_message_id(chat_id, 0);
-            known_message_id = 0;
-        }
-    } else {
-        delete_supplement_message(chat_id);
-    }
-
     if (image_path.empty()) {
         cerr << "render_screen_image вернул пустой путь, использую fallback text chat_id="
              << chat_id << endl;
@@ -187,24 +179,26 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
         if (known_message_id > 0 && !force_new_message) {
             cpr::Response edit_response;
             if (edit_live_text_message(chat_id, known_message_id, fallback_text, kb, &edit_response)) {
+                delete_supplement_message(chat_id);
                 return;
             }
 
             if (telegram_edit_target_invalid(edit_response)) {
-                cerr << "Сохранённый live text id сброшен для chat_id=" << chat_id
+                cerr << "Сохранённый live text id недействителен для chat_id=" << chat_id
                      << " после постоянной ошибки editMessageText" << endl;
-                delete_telegram_message(chat_id, known_message_id);
-                save_live_message_id(chat_id, 0);
-                known_message_id = 0;
-            } else {
-                cerr << "Временная/неизвестная ошибка editMessageText live для chat_id=" << chat_id
+                // Keep the old screen until its replacement has been delivered.
+            } else if (telegram_retryable_failure(edit_response)) {
+                cerr << "Временная ошибка editMessageText live для chat_id=" << chat_id
                      << ", новый экран не создаю" << endl;
                 return;
             }
         }
 
-        if (!fallback_text_message(chat_id, fallback_text, kb)) {
-            send_plain_fallback_text(chat_id, fallback_text, kb);
+        bool delivered = fallback_text_message(chat_id, fallback_text, kb);
+        if (!delivered) delivered = send_plain_fallback_text(chat_id, fallback_text, kb);
+        if (delivered) {
+            if (known_message_id > 0) delete_telegram_message(chat_id, known_message_id);
+            delete_supplement_message(chat_id);
         }
         return;
     }
@@ -243,13 +237,11 @@ void upsert_live_screen(long long chat_id, const ScreenView& view, bool force_ne
              << telegram_error_summary(edit) << endl;
 
         if (telegram_edit_target_invalid(edit)) {
-            cerr << "Сохранённый live media id сброшен для chat_id=" << chat_id
+            cerr << "Сохранённый live media id недействителен для chat_id=" << chat_id
                  << " после постоянной ошибки editMessageMedia" << endl;
-            delete_telegram_message(chat_id, known_message_id);
-            save_live_message_id(chat_id, 0);
-            known_message_id = 0;
-        } else {
-            cerr << "Временная/неизвестная ошибка editMessageMedia для chat_id=" << chat_id
+            // Keep the old screen until its replacement has been delivered.
+        } else if (telegram_retryable_failure(edit)) {
+            cerr << "Временная ошибка editMessageMedia для chat_id=" << chat_id
                  << ", новый live screen не создаю" << endl;
             filesystem::remove(image_path);
             return;

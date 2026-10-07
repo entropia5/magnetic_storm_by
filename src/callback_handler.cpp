@@ -23,17 +23,7 @@ void answer_callback_query(const string& callback_id, const string& text) {
 
 void handle_callback(long long chat_id, int message_id, const string& callback_id, const string& data) {
     save_user(chat_id);
-    int current_live_message_id = known_live_message_id(chat_id);
-    if (message_id > 0) {
-        if (current_live_message_id > 0 && current_live_message_id != message_id) {
-            cout << "↪️ live target updated from callback chat_id=" << chat_id
-                 << " callback_message_id=" << message_id
-                 << " current_live_message_id=" << current_live_message_id << endl;
-            delete_telegram_message(chat_id, current_live_message_id);
-        }
-        save_live_message_id(chat_id, message_id);
-    }
-    delete_supplement_message(chat_id);
+    (void)message_id;
     clear_waiting_state(chat_id);
 
     answer_callback_query(callback_id);

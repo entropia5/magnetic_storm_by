@@ -6,6 +6,9 @@
 #include <nlohmann/json.hpp>
 
 #include <ctime>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -40,70 +43,67 @@ double fetch_current_kp() {
     return -1.0;
 }
 
+
+std::vector<KpForecast> parse_kp_forecast(const std::string& text, long long chat_id) {
+    const std::vector<std::string> months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    std::istringstream input(text);
+    std::string line;
+    int year = 0;
+    int issued_month = 0;
+    std::vector<KpForecast> result;
+    while (std::getline(input, line)) {
+        if (line.rfind(":Issued:", 0) == 0) {
+            std::istringstream issued(line.substr(8));
+            std::string issued_month_name;
+            issued >> year >> issued_month_name;
+            auto issued_found = std::find(months.begin(), months.end(), issued_month_name);
+            if (issued_found != months.end()) issued_month = static_cast<int>(issued_found - months.begin()) + 1;
+        }
+        std::istringstream header(line);
+        std::string month;
+        int day = 0;
+        std::vector<KpForecast> dates;
+        int header_year = year;
+        int previous_month = issued_month;
+        while (header >> month >> day) {
+            auto found = std::find(months.begin(), months.end(), month);
+            if (found == months.end() || day < 1 || day > 31 || year < 2000) break;
+            int month_number = static_cast<int>(found - months.begin()) + 1;
+            if (previous_month == 12 && month_number == 1) ++header_year;
+            previous_month = month_number;
+            KpForecast fc;
+            fc.date = std::to_string(day) + " " + get_month_name(month_number, chat_id) + " " + std::to_string(header_year);
+            dates.push_back(fc);
+        }
+        if (dates.size() == 3) { result = std::move(dates); continue; }
+        if (result.size() != 3) continue;
+        std::istringstream row(line);
+        std::string interval;
+        double values[3];
+        if (!(row >> interval >> values[0] >> values[1] >> values[2])) continue;
+        const size_t index = result.front().values.size();
+        if (index >= 8) continue;
+        char expected[16];
+        std::snprintf(expected, sizeof(expected), "%02d-%02dUT", static_cast<int>(index * 3), static_cast<int>((index * 3 + 3) % 24));
+        if (interval != expected) continue;
+        for (double value : values) if (!std::isfinite(value) || value < 0 || value > 9) return {};
+        for (int i = 0; i < 3; ++i) {
+            result[i].values.push_back(values[i]);
+            result[i].max_kp = std::max(result[i].max_kp, values[i]);
+        }
+    }
+    if (result.size() != 3 || result.front().values.size() != 8) return {};
+    for (auto& fc : result) fc.status = kp_short_label(fc.max_kp, chat_id);
+    return result;
+}
+
 std::vector<KpForecast> fetch_kp_forecast_3day(long long chat_id) {
-    std::vector<KpForecast> forecast;
-    const cpr::Response response = cpr::Get(
-        cpr::Url{"https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"},
-        cpr::Timeout{10000}
-    );
+    const auto response = cpr::Get(cpr::Url{"https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"}, cpr::Timeout{10000});
     if (response.status_code != 200) {
-        return forecast;
+        std::cerr << "Прогноз NOAA недоступен: HTTP " << response.status_code << '\n';
+        return {};
     }
-
-    try {
-        std::vector<std::vector<double>> day_values(3);
-        std::vector<std::string> dates;
-        for (int offset = 0; offset < 3; ++offset) {
-            const std::tm day = get_minsk_time(offset);
-            std::ostringstream date;
-            date << day.tm_mday << ' '
-                 << get_month_name(day.tm_mon + 1, chat_id) << ' '
-                 << day.tm_year + 1900;
-            dates.push_back(date.str());
-        }
-
-        std::istringstream input(response.text);
-        std::string line;
-        while (std::getline(input, line)) {
-            if (line.find("UT") == std::string::npos
-                || line.find("UTC") != std::string::npos) {
-                continue;
-            }
-
-            std::vector<double> values;
-            std::istringstream line_input(line);
-            std::string token;
-            while (line_input >> token) {
-                if (token.find("UT") != std::string::npos
-                    || token.find('-') != std::string::npos) {
-                    continue;
-                }
-                try {
-                    const double value = std::stod(token);
-                    if (value >= 0.0 && value <= 10.0) values.push_back(value);
-                } catch (...) {
-                }
-            }
-            if (values.size() >= 3) {
-                for (int day = 0; day < 3; ++day) {
-                    if (day_values[day].size() < 8) day_values[day].push_back(values[day]);
-                }
-            }
-        }
-
-        for (int day = 0; day < 3; ++day) {
-            if (day_values[day].empty()) continue;
-            KpForecast item;
-            item.date = dates[day];
-            item.values = day_values[day];
-            for (const double value : item.values) {
-                if (value > item.max_kp) item.max_kp = value;
-            }
-            item.status = kp_short_label(item.max_kp, chat_id);
-            forecast.push_back(std::move(item));
-        }
-    } catch (const std::exception& error) {
-        std::cerr << "Ошибка парсинга прогноза: " << error.what() << '\n';
-    }
+    auto forecast = parse_kp_forecast(response.text, chat_id);
+    if (forecast.empty()) std::cerr << "Некорректная или неполная таблица прогноза NOAA\n";
     return forecast;
 }

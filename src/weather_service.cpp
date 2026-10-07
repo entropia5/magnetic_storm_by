@@ -4,6 +4,9 @@
 #include "weather_utils.h"
 
 #include <cmath>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -117,6 +120,14 @@ std::vector<WeatherForecastSlot> fetch_weather_forecast_slots(
                 ? item["dt_txt"].get<std::string>()
                 : "";
             slot.time = timestamp.size() >= 16 ? timestamp.substr(11, 5) : "";
+            if (item.contains("dt") && item["dt"].is_number_integer()) {
+                const std::time_t minsk_timestamp = item["dt"].get<std::time_t>() + 3 * 3600;
+                std::tm minsk{};
+                gmtime_r(&minsk_timestamp, &minsk);
+                std::ostringstream label;
+                label << std::put_time(&minsk, "%d.%m %H:%M");
+                slot.time = label.str();
+            }
             slot.temp = static_cast<int>(std::round(item["main"]["temp"].get<double>()));
             slot.feels_like = static_cast<int>(
                 std::round(item["main"]["feels_like"].get<double>())

@@ -28,3 +28,6 @@ bot_screens/
 !assets/screenshots/*.jpg
 *.log
 *.tmp
+
+.backups/
+build/
